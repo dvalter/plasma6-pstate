@@ -18,8 +18,9 @@ This version requires Plasma 6. Install it with `sudo ./install.sh`; it installs
 `tests/` contains mocks that emulate an Intel laptop (with the Dell, LG and Nvidia extras), so the widget
 can be developed and tested on any machine:
 
-* `tests/test_set_prefs.sh` checks `set_prefs.sh` against a fake sysfs tree.
-* `qmltestrunner -input tests/tst_utils.qml` runs the JavaScript unit tests.
+* `tests/run-tests.sh` runs all tests: `test_set_prefs.sh` checks `set_prefs.sh`, `tst_backend.qml` checks
+  reading and changing settings through the widget's backend, and `tst_utils.qml` has unit tests for the
+  JavaScript helpers. The QML tests need `qmltestrunner` (from `qt6-declarative-dev-tools` on Debian).
 * `tests/run-mock.sh` opens the widget in `plasmoidviewer` (from `plasma-sdk`) backed by the mocks, e.g.
   `tests/run-mock.sh -c org.kde.panel -f horizontal -l bottomedge` to see it in a panel.
 
