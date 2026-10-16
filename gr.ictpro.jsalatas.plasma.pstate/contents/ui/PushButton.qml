@@ -29,29 +29,15 @@ Item {
 
     property string symbol
     property alias text: label.text
-    property string sensor_value
-    property bool active: false
-    property bool updating: false
-    property var sensor: []
-    property bool acceptingChanges: false
+    property string sensor
+    property string sensorValue
+
+    readonly property bool active: main.values[sensor] == sensorValue
+    readonly property bool updating: active && sensor in main.pending
 
     property color borderColor: updating ? '#ff0000' : (active ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.6) :
                                          Qt.rgba(Kirigami.Theme.textColor.r,      Kirigami.Theme.textColor.g,      Kirigami.Theme.textColor.b,      0.4))
     property color buttonColor: active ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
-
-    Component.onCompleted: {
-        main.sensorsValuesChanged()
-    }
-
-    Connections {
-        target: main
-        function onSensorsValuesChanged() {
-            acceptingChanges = false
-            updating = false
-            active = main.sensors_model[sensor[0]]['value'] == sensor_value
-            acceptingChanges = true
-        }
-    }
 
     Rectangle {
         anchors.fill: parent
@@ -63,12 +49,7 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: {
-                if(acceptingChanges) {
-                    updating = true
-                    main.updateSensor(sensor[0], sensor_value)
-                }
-            }
+            onClicked: main.changeSetting(sensor, sensorValue)
         }
 
         PlasmaComponents.Label {

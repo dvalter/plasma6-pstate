@@ -31,16 +31,19 @@ import '../code/utils.js' as Utils
 PlasmoidItem {
     id: main
 
-    signal sensorsValuesChanged
     signal dataSourceReady
-    signal updateSensor(string name, string value)
 
     FontLoader {
         id: symbolsFont;
         source: '../font/plasma-pstate.ttf'
     }
 
-    property var sensors_model: Utils.get_sensors()
+    // The current value of every sensor and setting by name. It is replaced
+    // rather than modified, so that bindings using it update.
+    property var values: ({})
+    // The settings being changed, by name
+    property var pending: ({})
+
     property alias isReady: monitorDS.isReady
     property bool inTray: (Plasmoid.containmentDisplayHints & PlasmaCore.Types.ContainmentDrawsPlasmoidHeading) !== 0
     property string scriptPath: decodeURIComponent(Qt.resolvedUrl('../code/set_prefs.sh').toString().replace(/^file:\/\//, ''))
@@ -54,54 +57,56 @@ PlasmoidItem {
     switchHeight: Kirigami.Units.gridUnit * 20
 
     toolTipMainText: '' //i18n('Intel pstate and Thermal Management')
-    toolTipSubText: ''
+    toolTipSubText: tooltipText()
     toolTipTextFormat: Text.RichText
     Plasmoid.icon: 'cpu'
 
-    onUpdateSensor: (name, value) => {
-        print("updating sensor " + name +": " + value)
-        if(value != sensors_model[name]['value']) {
-            updater.update(name, value)
-        } else {
-            print("    same value")
-        }
-    }
-
-    function get_value_text(sensor, value) {
-        // lol! Is this the bwsat way to do it?
-        var obj = {'value': value, 'unit': sensors_model[sensor]['unit']}
-        return sensors_model[sensor]['print'](obj)
-    }
-
-    function get_sensors_text(sensors) {
-        var res = '';
-        if(sensors != undefined) {
-            for(var i = 0 ; i < sensors.length; i++) {
-                var value = sensors_model[sensors[i]]['print'](sensors_model[sensors[i]]);
-                if(value) {
-                    if(res) {
-                        res += ' | ';
-                    }
-                    res += value;
-                }
+    function setValues(changes) {
+        var newValues = Object.assign({}, values)
+        for(var name in changes) {
+            // Don't let a read that started before a change undo it
+            if(!(name in pending)) {
+                newValues[name] = changes[name]
             }
         }
-
-        return res || 'N/A';
+        values = newValues
     }
 
-    onSensorsValuesChanged: {
-        updateTooltip();
+    function setValue(name, value) {
+        var changes = {}
+        changes[name] = value
+        setValues(changes)
+    }
+
+    function valuesText(names) {
+        return Utils.sensors_text(names, values)
+    }
+
+    function changeSetting(name, value) {
+        value = String(value)
+        if(value == values[name]) {
+            return
+        }
+        // Show the new value right away; it is read back once written
+        setValue(name, value)
+        var newPending = Object.assign({}, pending)
+        newPending[name] = value
+        pending = newPending
+        updater.write(name, value)
+    }
+
+    function settingWritten(name) {
+        var newPending = Object.assign({}, pending)
+        delete newPending[name]
+        pending = newPending
+        monitorDS.read()
     }
 
     // The systemmonitor dataengine is gone in Plasma 6, use ksystemstats sensors instead
     component SystemSensor: Sensors.Sensor {
         property string modelKey
         updateRateLimit: 2000
-        onValueChanged: {
-            sensors_model[modelKey]['value'] = value
-            sensorsValuesChanged()
-        }
+        onValueChanged: setValue(modelKey, value)
     }
 
     SystemSensor { sensorId: 'cpu/all/averageFrequency'; modelKey: 'cpu_cur_freq' }
@@ -132,8 +137,9 @@ PlasmoidItem {
             sensorId: modelData
             updateRateLimit: 2000
             onValueChanged: {
-                sensors_model['fan_speeds']['value'][sensorId] = value
-                sensorsValuesChanged()
+                var fans = Object.assign({}, values['fan_speeds'])
+                fans[sensorId] = value
+                setValue('fan_speeds', fans)
             }
         }
     }
@@ -143,10 +149,12 @@ PlasmoidItem {
         engine: "powermanagement"
         connectedSources: ['Battery']
         onDataChanged: {
-            if(powermanagementDS.data["Battery"]) {
-                sensors_model['battery_remaining_time']['value'] = Number(powermanagementDS.data["Battery"]["Remaining msec"]) / 1000;
-                sensors_model['battery_percentage']['value'] = powermanagementDS.data["Battery"]["Percent"];
-                sensorsValuesChanged()
+            var battery = powermanagementDS.data["Battery"]
+            if(battery) {
+                setValues({
+                    'battery_remaining_time': Number(battery["Remaining msec"]) / 1000,
+                    'battery_percentage': battery["Percent"]
+                })
             }
         }
         interval: 2000
@@ -158,48 +166,59 @@ PlasmoidItem {
 
         property bool isReady: false
 
-        connectedSources: [readCommand]
+        property string command
+
+        // Read now rather than at the next interval
+        function read() {
+            if(command) {
+                disconnectSource(command)
+            }
+            command = readCommand
+            connectSource(command)
+        }
+
+        Component.onCompleted: read()
 
         onNewData: (sourceName, data) => {
             if (data['exit code'] > 0) {
-                print('monitorDS error: ' + data.stderr)
+                console.warn('Reading the settings failed: ' + data.stderr)
             } else {
-                var obj = JSON.parse(data.stdout);
-                var keys = Object.keys(obj);
-                for(var i=0; i< keys.length; i++) {
-                    sensors_model[keys[i]]['value'] = obj[keys[i]];
-                }
+                setValues(JSON.parse(data.stdout))
                 if(!isReady) {
-                    dataSourceReady();
-                    isReady = true;
+                    isReady = true
+                    dataSourceReady()
                 }
-                sensorsValuesChanged();
             }
         }
         interval: 2000
     }
 
+    onReadCommandChanged: monitorDS.read()
+
     P5Support.DataSource {
         id: updater
         engine: 'executable'
 
-        onNewData: (sourceName, data) => {
-            disconnectSource(sourceName)
+        // The setting each running command changes
+        property var settings: ({})
+
+        onNewData: (command, data) => {
+            disconnectSource(command)
             if (data['exit code'] > 0) {
-                print("    error: " + data.stderr)
-            } else {
-                print("    done")
+                console.warn('Changing ' + settings[command] + ' failed: ' + data.stderr)
             }
+            settingWritten(settings[command])
+            delete settings[command]
         }
 
-        function update(parameter, value) {
-            var command = 'sudo ' + scriptPath + ' -' + parameter.replace(/_/g, '-') + ' ' + value
-            print("exec: " + command)
+        function write(name, value) {
+            var command = 'sudo ' + scriptPath + ' -' + name.replace(/_/g, '-') + ' ' + value
+            settings[command] = name
             connectSource(command)
         }
     }
 
-    function updateTooltip() {
+    function tooltipText() {
         var toolTipSubText ='';
         var txt = '';
 
@@ -210,12 +229,12 @@ PlasmoidItem {
         toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">d</font></span>'
         toolTipSubText += '</td>'
         toolTipSubText += '<td style="text-align: left;">'
-        toolTipSubText += '<span>&nbsp;&nbsp;'+get_sensors_text(['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'])+'</span>'
+        toolTipSubText += '<span>&nbsp;&nbsp;'+(valuesText(['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq']) || 'N/A')+'</span>'
         toolTipSubText += '</td>'
         toolTipSubText += '</tr>'
 
-        txt = get_sensors_text(['battery_percentage', 'battery_remaining_time']);
-        if(txt != 'N/A') {
+        txt = valuesText(['battery_percentage', 'battery_remaining_time']);
+        if(txt) {
             toolTipSubText += '<tr>'
             toolTipSubText += '<td style="text-align: center;">'
             toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">h</font></span>'
@@ -226,8 +245,8 @@ PlasmoidItem {
             toolTipSubText += '</tr>'
         }
 
-        txt = get_sensors_text(['package_temp', 'fan_speeds']);
-        if (txt != 'N/A') {
+        txt = valuesText(['package_temp', 'fan_speeds']);
+        if (txt) {
             toolTipSubText += '<tr>'
             toolTipSubText += '<td style="text-align: center;">'
             toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">b</font></span>'
@@ -239,6 +258,6 @@ PlasmoidItem {
         }
         toolTipSubText += '</table></font>'
 
-        main.toolTipSubText = toolTipSubText
+        return toolTipSubText
     }
 }

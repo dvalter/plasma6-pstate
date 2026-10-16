@@ -26,7 +26,7 @@ ColumnLayout {
     id: radio
 
     property alias text: radio_title.text
-    property var sensor: []
+    property string sensor
     property var items: []
 
     property var props
@@ -40,15 +40,18 @@ ColumnLayout {
 
     onPropsChanged: {
         text = props['text']
-        sensor.push(props['sensor'])
+        sensor = props['sensor']
         items = props['items']
     }
 
     onItemsChanged: {
         for(var i = 0; i < items.length; i++) {
-            var props = items[i]
-            props['sensor'] = sensor
-            pushButton.createObject(buttons, props);
+            pushButton.createObject(buttons, {
+                'symbol': items[i]['symbol'],
+                'text': items[i]['text'],
+                'sensor': sensor,
+                'sensorValue': items[i]['sensor_value']
+            });
         }
     }
 

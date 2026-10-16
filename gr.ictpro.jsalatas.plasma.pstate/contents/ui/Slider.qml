@@ -22,74 +22,24 @@ import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
+import '../code/utils.js' as Utils
+
 RowLayout {
-    property alias min: slider.from
-    property alias max: slider.to
-    property alias value: slider.value
-    property bool acceptingChanges: false
-    property alias pressed: slider.pressed
-    property bool updating: false
-
-
-    property var sensor: []
-    property var min_sensor: []
-    property var max_sensor: []
-
-
-    property alias text: slider_title.text
     property var props
+
+    readonly property string sensor: props.sensor
+    readonly property bool updating: sensor in main.pending
+
     spacing: 10
 
-    onPropsChanged: {
-        acceptingChanges = false
-        text = props['text']
-        sensor.push(props['sensor'])
-        if(isNaN(props['min'])) {
-            min = 0
-            min_sensor.push(props['min'])
-        } else {
-            min = props['min']
-            min_sensor = []
-        }
-        if(isNaN(props['max'])) {
-            max = 100
-            max_sensor.push(props['max'])
-        } else {
-            max = props['max']
-            max_sensor = []
-        }
-        acceptingChanges = true
-    }
-
-    Component.onCompleted: {
-        acceptingChanges = true
-        main.sensorsValuesChanged()
-    }
-
-    Connections {
-        target: main
-        function onSensorsValuesChanged() {
-            if(!pressed) {
-                acceptingChanges = false
-                if(sensor.length != 0) {
-                    value = parseInt(main.sensors_model[sensor[0]]['value'], 10);
-                    slider_value.text = main.get_sensors_text(sensor);
-                    updating = false
-                }
-                if(min_sensor.length != 0) {
-                    min = parseInt(main.sensors_model[min_sensor[0]]['value'], 10);
-                }
-                if(max_sensor.length != 0) {
-                    max = parseInt(main.sensors_model[max_sensor[0]]['value'], 10);
-                }
-                acceptingChanges = true
-            }
-        }
+    // A limit is either a number or the name of the sensor that holds it
+    function limit(value, fallback) {
+        return typeof value === 'string' ? (parseInt(main.values[value], 10) || fallback) : value
     }
 
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignTop
-        id: slider_title
+        text: props.text
         font.pointSize: Kirigami.Theme.smallFont.pointSize
         color: Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
@@ -97,33 +47,39 @@ RowLayout {
     }
 
     PlasmaComponents.Slider {
+        id: slider
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignBottom
-        id: slider
+        from: limit(props.min, 0)
+        to: limit(props.max, 100)
         stepSize: 1
+
+        // Only change the setting once the slider is released
         onPressedChanged: {
-            //need to resend here
-            if(acceptingChanges) {
-                main.updateSensor(sensor[0], value)
+            if(!pressed) {
+                main.changeSetting(sensor, value)
             }
         }
-        onValueChanged: {
-            if(pressed) {
-                updating = true
-                slider_value.text = main.get_value_text(sensor[0], value)
-            } else {
-                if(acceptingChanges) {
-                    main.updateSensor(sensor[0], value)
-                }
+        onMoved: {
+            if(!pressed) {
+                main.changeSetting(sensor, value)
             }
         }
     }
 
+    Binding {
+        target: slider
+        property: 'value'
+        value: parseInt(main.values[sensor], 10) || slider.from
+        when: !slider.pressed
+        restoreMode: Binding.RestoreNone
+    }
+
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignTop
-        id: slider_value
+        text: Utils.format_value(sensor, slider.value)
         font.pointSize: Kirigami.Theme.smallFont.pointSize
-        color: pressed || updating? '#ff0000' : Kirigami.Theme.textColor
+        color: slider.pressed || updating ? '#ff0000' : Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
         Layout.minimumWidth: Kirigami.Units.gridUnit * 3
     }

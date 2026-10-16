@@ -42,7 +42,6 @@ Column {
     Component.onCompleted: {
         if(main.isReady) {
             initialize()
-            main.sensorsValuesChanged()
         }
     }
 
@@ -50,7 +49,6 @@ Column {
         target: main
         function onDataSourceReady() {
             initialize()
-            main.sensorsValuesChanged()
         }
     }
 
@@ -73,7 +71,7 @@ Column {
             for(var j=0; j< item_vendors.length; j++) {
                 var vendor = vendors[item_vendors[j]]
                 for(var k=0; k<vendor['provides'].length; k++) {
-                    if(main.sensors_model[vendor['provides'][k]]['value']) {
+                    if(main.values[vendor['provides'][k]]) {
                         return true;
                         break;
                     }

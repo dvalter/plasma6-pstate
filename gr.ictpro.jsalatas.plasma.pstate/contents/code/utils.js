@@ -17,29 +17,19 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-function to_int(item) {
-    var val = Math.round(parseFloat(item['value']), 0);
-    return 0 == val || val ? val  + item['unit'] : '';
+function to_int(value, unit) {
+    var val = Math.round(parseFloat(value));
+    return isNaN(val) ? '' : val + unit;
 }
 
-function array_to_int(items) {
-    var res = '';
-    var keys = Object.keys(items['value'])
-    for (var i=0; i< keys.length; i++) {
-        var item = items['value'][keys[i]]
-        var val = Math.round(parseFloat(item), 0);
-        if(0 == val || val) {
-            if(res) {
-                res += ' | '
-            }
-            res += val + items['unit'];
-        }
-    };
-    return res;
+function array_to_int(values, unit) {
+    return Object.keys(values || {}).map(key => to_int(values[key], unit))
+                                    .filter(text => text)
+                                    .join(' | ');
 }
 
-function to_time(item) {
-    var val = Math.round(parseFloat(item['value']), 0);
+function to_time(value) {
+    var val = Math.round(parseFloat(value));
     var hours   = Math.floor(val / 3600);
     var minutes = Math.floor((val - (hours * 3600)) / 60);
 
@@ -47,40 +37,33 @@ function to_time(item) {
     return hours ? hours+':'+minutes : '';
 }
 
-function to_bool(item) {
-    return parseInt(item['value'], 10) == 1;
-}
-
-function to_string(item) {
-    return item['value'];
-}
-
+// How to display sensors and settings. Anything not listed is shown as an
+// integer without a unit.
 var sensors = {
-    // Informational
-    'cpu_cur_load': {'value': undefined, 'unit':'%', 'print': to_int},
-    'cpu_cur_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
-    'gpu_cur_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
-    'gpu_min_limit': {'value': undefined, 'unit':'', 'print': to_int},
-    'gpu_max_limit': {'value': undefined, 'unit':'', 'print': to_int},
-    'battery_percentage': {'value': undefined, 'unit': '%', 'print': to_int},
-    'battery_remaining_time': {'value': undefined, 'print': to_time},
-    'package_temp': {'value': undefined, 'unit': ' \u2103', 'print': to_int},
-    'fan_speeds': {'value': {}, 'unit': ' RPM', 'print': array_to_int},
-    // Tunable
-    'cpu_min_perf': {'value': undefined, 'unit':'%', 'print': to_int},
-    'cpu_max_perf': {'value': undefined, 'unit':'%', 'print': to_int},
-    'cpu_turbo': {'value': undefined, 'unit':'', 'print': to_bool},
-    'gpu_min_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
-    'gpu_max_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
-    'gpu_boost_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
-    'cpu_governor': {'value': undefined, 'unit':'', 'print': to_string},
-    'energy_perf': {'value': undefined, 'unit':'', 'print': to_string},
-    'thermal_mode': {'value': undefined, 'unit':'', 'print': to_string}, 
-    'lg_battery_charge_limit': {'value': undefined, 'unit':'', 'print': to_bool},
-    'lg_usb_charge': {'value': undefined, 'unit':'', 'print': to_bool},
-    'lg_fan_mode': {'value': undefined, 'unit':'', 'print': to_bool},
-    'powermizer': {'value': undefined, 'unit':'', 'print': to_string}, 
+    'cpu_cur_load': {'unit': '%'},
+    'cpu_cur_freq': {'unit': ' MHz'},
+    'gpu_cur_freq': {'unit': ' MHz'},
+    'battery_percentage': {'unit': '%'},
+    'battery_remaining_time': {'format': to_time},
+    'package_temp': {'unit': ' \u2103'},
+    'fan_speeds': {'unit': ' RPM', 'format': array_to_int},
+    'cpu_min_perf': {'unit': '%'},
+    'cpu_max_perf': {'unit': '%'},
+    'gpu_min_freq': {'unit': ' MHz'},
+    'gpu_max_freq': {'unit': ' MHz'},
+    'gpu_boost_freq': {'unit': ' MHz'},
+}
 
+function format_value(name, value) {
+    var sensor = sensors[name] || {};
+    return (sensor.format || to_int)(value, sensor.unit || '');
+}
+
+// The values of the named sensors as text, skipping those without a value
+function sensors_text(names, values) {
+    return names.map(name => format_value(name, values[name]))
+                .filter(text => text)
+                .join(' | ');
 }
 
 var vendors = {
@@ -175,10 +158,6 @@ function find_sensor_ids(tree, idRole, pattern, parent) {
 
 function get_model() {
     return model;
-}
-
-function get_sensors() {
-    return sensors;
 }
 
 function get_vendors() {

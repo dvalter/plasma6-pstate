@@ -67,13 +67,6 @@ Row {
         }
     }
 
-    Connections {
-        target: main
-        function onSensorsValuesChanged() {
-            sensors_label.text = main.get_sensors_text(sensors);
-        }
-    }
-
     onItemsChanged: {
         // parent: controls
         for(var i = 0; i < items.length; i++) {
@@ -135,11 +128,13 @@ Row {
 
         PlasmaComponents.Label  {
             id: spacer0
-            visible: sensors_label.text != 'N/A'
+            visible: sensors_label.visible
         }
 
         PlasmaComponents.Label {
             id: sensors_label
+
+            text: main.valuesText(sensors || [])
 
             Layout.bottomMargin: 5
 
@@ -147,7 +142,7 @@ Row {
             color: Kirigami.Theme.textColor
             opacity: 0.8
 
-            visible: sensors_label.text != 'N/A'
+            visible: text != ''
         }
 
         PlasmaComponents.Label  {

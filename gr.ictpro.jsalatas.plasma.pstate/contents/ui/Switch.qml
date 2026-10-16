@@ -23,43 +23,15 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
 RowLayout {
-    property alias text: checkbox_title.text
-    property alias checked: checkBox.checked
-    property var sensor: []
-    property bool acceptingChanges: false
-
     property var props
+
+    readonly property string sensor: props.sensor
+
     spacing: 10
-
-    onPropsChanged: {
-        acceptingChanges = false
-
-        text = props['text']
-        sensor.push(props['sensor'])
-        acceptingChanges = true
-    }
-
-    Component.onCompleted: {
-        acceptingChanges = true
-        main.sensorsValuesChanged()
-    }
-
-    Connections {
-        target: main
-        function onSensorsValuesChanged() {
-            acceptingChanges = false
-
-            if(sensor.length != 0) {
-                checked = main.sensors_model[sensor[0]]['value'] == 'true';
-            }
-
-            acceptingChanges = true
-        }
-    }
 
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignVCenter
-        id: checkbox_title
+        text: props.text
         font.pointSize: Kirigami.Theme.smallFont.pointSize
         color: Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
@@ -67,11 +39,7 @@ RowLayout {
     }
 
     PlasmaComponents.CheckBox {
-        id: checkBox
-        onCheckedChanged: {
-            if(acceptingChanges) {
-                main.updateSensor(sensor[0], checked)
-            }
-        }
+        checked: main.values[sensor] == 'true'
+        onToggled: main.changeSetting(sensor, checked)
     }
 }

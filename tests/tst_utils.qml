@@ -35,9 +35,18 @@ TestCase {
                  'lmsensors/thinkpad-isa-0000/fan1'])
     }
 
-    function test_print_helpers() {
-        compare(Utils.array_to_int({'value': {'a': '2100.4', 'b': undefined, 'c': '0'}, 'unit': ' RPM'}), '2100 RPM | 0 RPM')
-        compare(Utils.to_int({'value': '', 'unit': '%'}), '')
-        compare(Utils.to_time({'value': 5400}), '1:30')
+    function test_format_value() {
+        compare(Utils.format_value('cpu_min_perf', '20'), '20%')
+        compare(Utils.format_value('cpu_min_perf', ''), '')
+        compare(Utils.format_value('cpu_min_perf', undefined), '')
+        compare(Utils.format_value('gpu_min_limit', '300.4'), '300')
+        compare(Utils.format_value('battery_remaining_time', 5400), '1:30')
+        compare(Utils.format_value('fan_speeds', {'a': '2100.4', 'b': undefined, 'c': '0'}), '2100 RPM | 0 RPM')
+    }
+
+    function test_sensors_text() {
+        var values = {'cpu_cur_load': 12.6, 'cpu_cur_freq': undefined, 'gpu_cur_freq': '450'}
+        compare(Utils.sensors_text(['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'], values), '13% | 450 MHz')
+        compare(Utils.sensors_text(['cpu_cur_freq'], values), '')
     }
 }
