@@ -1,47 +1,45 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Layouts 1.1
+import QtQuick
+import QtQuick.Controls as QQC2
+import QtQuick.Layouts
+import org.kde.kirigami as Kirigami
+import org.kde.kcmutils as KCM
+import org.kde.plasma.plasmoid
 
-Item {
+KCM.SimpleKCM {
     property alias cfg_useDefaultIcon: useDefaultIconCheckbox.checked
     property alias cfg_showIntelGPU: showIntelGPUCheckbox.checked
-    property string cfg_customIcon: plasmoid.configuration.customIcon
+    property string cfg_customIcon: Plasmoid.configuration.customIcon
     property alias cfg_useSudoForReading: useSudoForReadingCheckbox.checked
 
-    GridLayout {
-        Layout.fillWidth: true
-        columns: 2
+    property bool cfg_useDefaultIconDefault
+    property bool cfg_showIntelGPUDefault
+    property string cfg_customIconDefault
+    property bool cfg_useSudoForReadingDefault
 
-        CheckBox {
+    Kirigami.FormLayout {
+        QQC2.CheckBox {
             id: useDefaultIconCheckbox
             text: i18n('Use Default Icon')
-            Layout.columnSpan: 2
-        }
-
-        Label {
-            text: i18n("Custom Icon:")
-            Layout.alignment: Qt.AlignRight
         }
 
         IconPicker {
+            Kirigami.FormData.label: i18n("Custom Icon:")
             currentIcon: cfg_customIcon
-            onIconChanged: cfg_customIcon = iconName
+            onIconPicked: iconName => cfg_customIcon = iconName
             onIconCleared: {
                 useDefaultIconCheckbox.checked = true
             }
             enabled: !useDefaultIconCheckbox.checked
         }
 
-        CheckBox {
+        QQC2.CheckBox {
             id: showIntelGPUCheckbox
             text: i18n('Show Intel GPU')
-            Layout.columnSpan: 2
         }
 
-        CheckBox {
+        QQC2.CheckBox {
             id: useSudoForReadingCheckbox
             text: i18n('Use sudo for reading values')
-            Layout.columnSpan: 2
         }
     }
 }

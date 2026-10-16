@@ -1,55 +1,46 @@
-import QtQuick 2.2
-import QtQuick.Controls 1.3
-import QtQuick.Layouts 1.1
-import org.kde.kquickcontrolsaddons 2.0 as KQuickAddons
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Controls as QQC2
+import org.kde.iconthemes as KIconThemes
+import org.kde.kirigami as Kirigami
+import org.kde.ksvg as KSvg
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid
 
 // basically taken from kickoff
-Button {
+QQC2.Button {
     id: iconButton
 
     property string currentIcon
     property string defaultIcon
 
-    signal iconChanged(string iconName)
+    signal iconPicked(string iconName)
     signal iconCleared
 
-    Layout.minimumWidth: previewFrame.width + units.smallSpacing * 2
-    Layout.maximumWidth: Layout.minimumWidth
-    Layout.minimumHeight: previewFrame.height + units.smallSpacing * 2
-    Layout.maximumHeight: Layout.minimumWidth
+    implicitWidth: previewFrame.width + Kirigami.Units.smallSpacing * 2
+    implicitHeight: previewFrame.height + Kirigami.Units.smallSpacing * 2
 
-    KQuickAddons.IconDialog {
+    KIconThemes.IconDialog {
         id: iconDialog
         onIconNameChanged: {
             iconPreview.source = iconName
-            iconChanged(iconName)
+            iconButton.iconPicked(iconName)
         }
     }
 
-    // just to provide some visual feedback, cannot have checked without checkable enabled
-    checkable: true
-    onClicked: {
-        checked = Qt.binding(function() { // never actually allow it being checked
-            return iconMenu.status === PlasmaComponents.DialogStatus.Open
-        })
+    onPressed: iconMenu.opened ? iconMenu.close() : iconMenu.open()
 
-        iconMenu.open(0, height)
-    }
-
-    PlasmaCore.FrameSvgItem {
+    KSvg.FrameSvgItem {
         id: previewFrame
         anchors.centerIn: parent
-        imagePath: plasmoid.location === PlasmaCore.Types.Vertical || plasmoid.location === PlasmaCore.Types.Horizontal
+        imagePath: Plasmoid.formFactor === PlasmaCore.Types.Vertical || Plasmoid.formFactor === PlasmaCore.Types.Horizontal
                     ? "widgets/panel-background" : "widgets/background"
-        width: units.iconSizes.large + fixedMargins.left + fixedMargins.right
-        height: units.iconSizes.large + fixedMargins.top + fixedMargins.bottom
+        width: Kirigami.Units.iconSizes.large + fixedMargins.left + fixedMargins.right
+        height: Kirigami.Units.iconSizes.large + fixedMargins.top + fixedMargins.bottom
 
-        PlasmaCore.IconItem {
+        Kirigami.Icon {
             id: iconPreview
             anchors.centerIn: parent
-            width: units.iconSizes.large
+            width: Kirigami.Units.iconSizes.large
             height: width
             source: currentIcon
         }
@@ -57,23 +48,24 @@ Button {
 
     function setDefaultIcon() {
         iconPreview.source = defaultIcon
-        iconChanged(defaultIcon)
+        iconPicked(defaultIcon)
         iconCleared
     }
 
-    // QQC Menu can only be opened at cursor position, not a random one
-    PlasmaComponents.ContextMenu {
+    QQC2.Menu {
         id: iconMenu
-        visualParent: iconButton
 
-        PlasmaComponents.MenuItem {
+        // Appear below the button
+        y: parent.height
+
+        QQC2.MenuItem {
             text: i18nc("@item:inmenu Open icon chooser dialog", "Choose...")
-            icon: "document-open-folder"
+            icon.name: "document-open-folder"
             onClicked: iconDialog.open()
         }
-        PlasmaComponents.MenuItem {
+        QQC2.MenuItem {
             text: i18nc("@item:inmenu Reset icon to default", "Clear Icon")
-            icon: "edit-clear"
+            icon.name: "edit-clear"
             onClicked: setDefaultIcon()
         }
     }
