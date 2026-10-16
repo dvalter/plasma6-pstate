@@ -66,12 +66,8 @@ function sensors_text(names, values) {
                 .join(' | ');
 }
 
-var vendors = {
-    'dell': {'provides': ['thermal_mode']},
-    'lg-laptop': {'provides': ['lg_battery_charge_limit', 'lg_usb_charge', 'lg_fan_mode']},
-    'nvidia': {'provides': ['powermizer']}
-}
-
+// The sections of the popup. Sections listing required settings are only
+// shown when at least one of them has a value, i.e. the hardware is present.
 var model =  [
     {'type': 'header', 'text': 'Processor Settings', 'icon': 'd',
         'sensors': ['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'],
@@ -105,7 +101,7 @@ var model =  [
         ]
     },
     {'type': 'header', 'text': 'Thermal Management', 'icon': 'b',
-        'vendors': ['dell'],
+        'requires': ['thermal_mode'],
         'sensors': ['package_temp', 'fan_speeds'],
         'items': [
             {'type': 'radio', 'text': '', 'sensor': 'thermal_mode', 'items' :[
@@ -117,20 +113,20 @@ var model =  [
         ]
     }, 
     {'type': 'header', 'text': 'Power Supply Management', 'icon': 'm',
-        'vendors': ['lg-laptop'], 
+        'requires': ['lg_battery_charge_limit', 'lg_usb_charge'],
         'items': [
             {'type': 'switch', 'text': 'Battery Limit', 'sensor': 'lg_battery_charge_limit'},
             {'type': 'switch', 'text': 'USB Charge', 'sensor': 'lg_usb_charge'}
         ]
     },
     {'type': 'header', 'text': 'Fan Control', 'icon': 'n',
-        'vendors': ['lg-laptop'], 
+        'requires': ['lg_fan_mode'],
         'items': [
             {'type': 'switch', 'text': 'Silent Mode', 'sensor': 'lg_fan_mode'}
         ]
     },
     {'type': 'header', 'text': 'Nvidia Settings', 'icon': 'o',
-        'vendors': ['nvidia'],
+        'requires': ['powermizer'],
         'items': [
             {'type': 'combobox', 'text': 'PowerMizer', 'sensor': 'powermizer', 'items' :[
                  {'text': 'Adaptive', 'sensor_value': '0'},
@@ -158,9 +154,5 @@ function find_sensor_ids(tree, idRole, pattern, parent) {
 
 function get_model() {
     return model;
-}
-
-function get_vendors() {
-    return vendors;
 }
 

@@ -30,13 +30,8 @@ ColumnLayout {
     Layout.maximumWidth: implicitWidth
     Layout.maximumHeight: implicitHeight
 
-    readonly property var vendors: Utils.get_vendors()
-
-    // Sections for vendor specific hardware are only shown when one of the
-    // vendor's settings has a value
-    function isPresent(sectionVendors) {
-        return !sectionVendors || sectionVendors.some(
-            vendor => vendors[vendor].provides.some(name => main.values[name]))
+    function isPresent(section) {
+        return !section.requires || section.requires.some(name => main.values[name])
     }
 
     Repeater {
@@ -46,7 +41,7 @@ ColumnLayout {
             required property var modelData
 
             props: modelData
-            visible: isPresent(modelData.vendors)
+            visible: isPresent(modelData)
 
             Layout.topMargin: 5
             Layout.bottomMargin: 10
