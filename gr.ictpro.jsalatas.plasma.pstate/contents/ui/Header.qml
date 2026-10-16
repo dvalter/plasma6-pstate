@@ -22,135 +22,58 @@ import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
-Row {
-    id: header
-
-    topPadding: 5
-    bottomPadding: 10
-
-    property alias symbol: icon.text
-    property alias text: title.text
-    property var sensors: []
-    property var items: []
-
+GridLayout {
     property var props
 
-    Component {
-        id: group
-        Group {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 10
-        }
+    columns: 2
+    columnSpacing: 10
+    rowSpacing: 0
+
+    PlasmaComponents.Label {
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 2.2
+
+        horizontalAlignment: Text.AlignHCenter
+
+        text: props.icon
+        font.pointSize: Kirigami.Theme.smallFont.pointSize * 2.5
+        font.family: symbolsFont.name
+        color: Kirigami.Theme.textColor
     }
 
-    Component {
-        id: radio
-        Radio {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 10
-        }
-    }
-    
-    Component {
-        id: switchbutton
-        Switch {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 5
-        }
+    PlasmaComponents.Label {
+        text: props.text
+        font.pointSize: Kirigami.Theme.smallFont.pointSize * 2
+        color: Kirigami.Theme.textColor
     }
 
-    Component {
-        id: combobox
-        ComboBox {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 5
-        }
+    Item {
+        visible: sensorsLabel.visible
     }
 
-    onItemsChanged: {
-        // parent: controls
-        for(var i = 0; i < items.length; i++) {
-            switch (items[i]['type']) {
-                case 'radio': {
-                    radio.createObject(controls, {'props': items[i]})
-                    break
-                }
-                case 'group': {
-                    group.createObject(controls, {'props': items[i]})
-                    break
-                }
-                case 'switch': {
-                    switchbutton.createObject(controls, {'props': items[i]})
-                    break
-                }
-                case 'combobox': {
-                    combobox.createObject(controls, {'props': items[i]})
-                    break
-                }
-                default: console.log("header: unkonwn type: " + items[i]['type'])
+    PlasmaComponents.Label {
+        id: sensorsLabel
+
+        Layout.bottomMargin: 5
+
+        text: main.valuesText(props.sensors || [])
+        font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
+        color: Kirigami.Theme.textColor
+        opacity: 0.8
+
+        visible: text != ''
+    }
+
+    Item {
+    }
+
+    ColumnLayout {
+        Repeater {
+            model: props.items
+
+            Control {
+                required property var modelData
+                props: modelData
             }
-        }
-    }
-
-    onPropsChanged: {
-        symbol = props['icon']
-        text = props['text']
-        sensors = props['sensors']
-        items = props['items']
-    }
-
-    GridLayout {
-        id: grid
-
-        columns: 2
-        columnSpacing: 10
-        rowSpacing: 0
-
-        PlasmaComponents.Label {
-            id: icon
-
-            width: Kirigami.Units.gridUnit * 2.2
-            Layout.minimumWidth : width
-
-            horizontalAlignment: Text.AlignHCenter
-
-            font.pointSize: Kirigami.Theme.smallFont.pointSize * 2.5
-            font.family: symbolsFont.name
-            color: Kirigami.Theme.textColor
-        }
-
-        PlasmaComponents.Label {
-            id: title
-
-            font.pointSize: Kirigami.Theme.smallFont.pointSize * 2
-            color: Kirigami.Theme.textColor
-        }
-
-        PlasmaComponents.Label  {
-            id: spacer0
-            visible: sensors_label.visible
-        }
-
-        PlasmaComponents.Label {
-            id: sensors_label
-
-            text: main.valuesText(sensors || [])
-
-            Layout.bottomMargin: 5
-
-            font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
-            color: Kirigami.Theme.textColor
-            opacity: 0.8
-
-            visible: text != ''
-        }
-
-        PlasmaComponents.Label  {
-            id: spacer1
-        }
-
-        ColumnLayout {
-            id: controls
         }
     }
 }

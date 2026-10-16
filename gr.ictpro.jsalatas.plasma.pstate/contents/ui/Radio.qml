@@ -23,50 +23,32 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
 ColumnLayout {
-    id: radio
-
-    property alias text: radio_title.text
-    property string sensor
-    property var items: []
-
     property var props
 
-    objectName: "Radio"
-
-    Component {
-        id: pushButton
-        PushButton {}
-    }
-
-    onPropsChanged: {
-        text = props['text']
-        sensor = props['sensor']
-        items = props['items']
-    }
-
-    onItemsChanged: {
-        for(var i = 0; i < items.length; i++) {
-            pushButton.createObject(buttons, {
-                'symbol': items[i]['symbol'],
-                'text': items[i]['text'],
-                'sensor': sensor,
-                'sensorValue': items[i]['sensor_value']
-            });
-        }
-    }
-
     PlasmaComponents.Label {
-        id: radio_title
+        id: title
+        text: props.text
         font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
         color: Kirigami.Theme.textColor
         visible: text != ''
     }
+
     RowLayout {
-        id: buttons
         spacing: -0.5
-        Layout.topMargin: radio_title.visible ? 0 : 8
+        Layout.topMargin: title.visible ? 0 : 8
         Layout.rightMargin: 15
 
-        height: Kirigami.Units.gridUnit * 4
+        Repeater {
+            model: props.items
+
+            PushButton {
+                required property var modelData
+
+                symbol: modelData.symbol
+                text: modelData.text
+                sensor: props.sensor
+                sensorValue: modelData.sensor_value
+            }
+        }
     }
 }

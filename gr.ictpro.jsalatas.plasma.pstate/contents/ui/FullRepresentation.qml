@@ -19,103 +19,37 @@
 
 import QtQuick
 import QtQuick.Layouts
-import org.kde.plasma.plasmoid
-import org.kde.kirigami as Kirigami
 
 import '../code/utils.js' as Utils
 
-Column {
-    id: fullRoot
-    spacing: 0.1
-    Layout.minimumWidth: Kirigami.Units.gridUnit * 15
-    Layout.minimumHeight: Kirigami.Units.gridUnit * 20
+ColumnLayout {
+    spacing: 0
 
-    property var model: Utils.get_model()
-    property var vendors: Utils.get_vendors()
+    Layout.minimumWidth: implicitWidth
+    Layout.minimumHeight: implicitHeight
+    Layout.maximumWidth: implicitWidth
+    Layout.maximumHeight: implicitHeight
 
-    Component {
-        id: header
+    readonly property var vendors: Utils.get_vendors()
+
+    // Sections for vendor specific hardware are only shown when one of the
+    // vendor's settings has a value
+    function isPresent(sectionVendors) {
+        return !sectionVendors || sectionVendors.some(
+            vendor => vendors[vendor].provides.some(name => main.values[name]))
+    }
+
+    Repeater {
+        model: Utils.get_model()
+
         Header {
-        }
-    }
+            required property var modelData
 
-    Component.onCompleted: {
-        if(main.isReady) {
-            initialize()
-        }
-    }
+            props: modelData
+            visible: isPresent(modelData.vendors)
 
-    Connections {
-        target: main
-        function onDataSourceReady() {
-            initialize()
-        }
-    }
-
-    Connections {
-        target: Plasmoid.configuration
-        function onShowIntelGPUChanged() {
-            if(main.isReady) {
-                initialize()
-            }
-        }
-        function onUseSudoForReadingChanged() {
-            if(main.isReady) {
-                initialize()
-            }
-        }
-    }
-
-    function is_present(item_vendors) {
-        if(item_vendors && item_vendors.length != 0) {
-            for(var j=0; j< item_vendors.length; j++) {
-                var vendor = vendors[item_vendors[j]]
-                for(var k=0; k<vendor['provides'].length; k++) {
-                    if(main.values[vendor['provides'][k]]) {
-                        return true;
-                        break;
-                    }
-                }
-            }
-            return false;
-        }
-
-        return true;
-    }
-
-    function initialize() {
-        removeChildren()
-
-        var w = 0;
-        var h = 0;
-
-        for(var i = 0; i < model.length; i++) {
-            var item = model[i];
-            if(is_present(item['vendors'])) {
-                switch (item.type) {
-                    case 'header': {
-                        var obj = header.createObject(fullRoot, {'props': item})
-                        w = Math.max(w, obj.width)
-                        h += obj.height
-                        break
-                    }
-                    default: console.log("unkonwn type: " + item.type)
-                }
-            }
-        }
-
-        //FIXME: For some reason, the first time it is shown, the two rects are different :\
-        print(">>>>>>>>>>>>> childrenRect: " + childrenRect.width + " - " + childrenRect.height)
-        print(">>>>>>>>>>>>>          w-h: " + w + " - " + h)
-        Layout.minimumWidth = w
-        Layout.minimumHeight = h
-        Layout.maximumWidth = w
-        Layout.maximumHeight = h
-    }
-    
-    function removeChildren() {
-        for(var i = fullRoot.children.length; i > 0 ; i--) {
-            fullRoot.children[i-1].destroy()
+            Layout.topMargin: 5
+            Layout.bottomMargin: 10
         }
     }
 }

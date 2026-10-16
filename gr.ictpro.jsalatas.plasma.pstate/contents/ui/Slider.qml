@@ -49,6 +49,7 @@ RowLayout {
     PlasmaComponents.Slider {
         id: slider
         Layout.fillWidth: true
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 10
         Layout.alignment: Qt.AlignBottom
         from: limit(props.min, 0)
         to: limit(props.max, 100)

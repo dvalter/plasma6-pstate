@@ -31,8 +31,6 @@ import '../code/utils.js' as Utils
 PlasmoidItem {
     id: main
 
-    signal dataSourceReady
-
     FontLoader {
         id: symbolsFont;
         source: '../font/plasma-pstate.ttf'
@@ -44,7 +42,6 @@ PlasmoidItem {
     // The settings being changed, by name
     property var pending: ({})
 
-    property alias isReady: monitorDS.isReady
     property bool inTray: (Plasmoid.containmentDisplayHints & PlasmaCore.Types.ContainmentDrawsPlasmoidHeading) !== 0
     property string scriptPath: decodeURIComponent(Qt.resolvedUrl('../code/set_prefs.sh').toString().replace(/^file:\/\//, ''))
     property string readCommand: (Plasmoid.configuration.useSudoForReading ? 'sudo ' : '') + scriptPath + ' -read-all'
@@ -164,8 +161,6 @@ PlasmoidItem {
         id: monitorDS
         engine: 'executable'
 
-        property bool isReady: false
-
         property string command
 
         // Read now rather than at the next interval
@@ -184,10 +179,6 @@ PlasmoidItem {
                 console.warn('Reading the settings failed: ' + data.stderr)
             } else {
                 setValues(JSON.parse(data.stdout))
-                if(!isReady) {
-                    isReady = true
-                    dataSourceReady()
-                }
             }
         }
         interval: 2000

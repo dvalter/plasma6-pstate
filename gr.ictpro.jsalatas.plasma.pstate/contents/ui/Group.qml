@@ -20,61 +20,24 @@
 import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
-import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 
 ColumnLayout {
-    id: group
-
-    property alias text: group_title.text
-    property var items: []
     property var props
-    
-    objectName: "Group"
-
-    onPropsChanged: {
-        text = props['text']
-        items = props['items']
-        visible = props['visible'] == undefined || Plasmoid.configuration[props['visible']]
-    }
-
-    Component {
-        id: slider
-        Slider {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 5
-            Layout.minimumWidth: Kirigami.Units.gridUnit * 18
-        }
-    }
-
-    Component {
-        id: switchbutton
-        Switch {
-            Layout.topMargin: 5
-            Layout.bottomMargin: 5
-        }
-    }
-
-    onItemsChanged: {
-        for(var i = 0; i < items.length; i++) {
-            switch (items[i]['type']) {
-                case 'slider': {
-                    slider.createObject(group, {'props': items[i]})
-                    break
-                }
-                case 'switch': {
-                    switchbutton.createObject(group, {'props': items[i]})
-                    break
-                }
-                default: console.log("header: unkonwn type: " + items[i]['type'])
-            }
-        }
-    }
 
     PlasmaComponents.Label {
-        id: group_title
+        text: props.text
         font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
         color: Kirigami.Theme.textColor
         visible: text != ''
+    }
+
+    Repeater {
+        model: props.items
+
+        Control {
+            required property var modelData
+            props: modelData
+        }
     }
 }

@@ -22,8 +22,8 @@ import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
 Item {
-    width: Kirigami.Units.gridUnit * 4.2
-    height: Kirigami.Units.gridUnit * 4
+    implicitWidth: Kirigami.Units.gridUnit * 4.2
+    implicitHeight: Kirigami.Units.gridUnit * 4
 
     objectName: "PushButton"
 
