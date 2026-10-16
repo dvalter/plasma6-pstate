@@ -43,7 +43,7 @@ PlasmoidItem {
     property var sensors_model: Utils.get_sensors()
     property alias isReady: monitorDS.isReady
     property bool inTray: (Plasmoid.containmentDisplayHints & PlasmaCore.Types.ContainmentDrawsPlasmoidHeading) !== 0
-    property string scriptPath: '/usr/share/plasma/plasmoids/gr.ictpro.jsalatas.plasma.pstate/contents/code/set_prefs.sh'
+    property string scriptPath: decodeURIComponent(Qt.resolvedUrl('../code/set_prefs.sh').toString().replace(/^file:\/\//, ''))
     property string readCommand: (Plasmoid.configuration.useSudoForReading ? 'sudo ' : '') + scriptPath + ' -read-all'
 
     compactRepresentation: CompactRepresentation { }
