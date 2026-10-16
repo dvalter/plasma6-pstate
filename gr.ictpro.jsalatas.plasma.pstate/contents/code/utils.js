@@ -30,11 +30,12 @@ function array_to_int(values, unit) {
 
 function to_time(value) {
     var val = Math.round(parseFloat(value));
-    var hours   = Math.floor(val / 3600);
-    var minutes = Math.floor((val - (hours * 3600)) / 60);
-
-    if (minutes < 10) {minutes = "0"+minutes;}
-    return hours ? hours+':'+minutes : '';
+    if(!(val > 0)) {
+        return '';
+    }
+    var hours = Math.floor(val / 3600);
+    var minutes = Math.floor(val % 3600 / 60);
+    return hours + ':' + (minutes < 10 ? '0' : '') + minutes;
 }
 
 // How to display sensors and settings. Anything not listed is shown as an

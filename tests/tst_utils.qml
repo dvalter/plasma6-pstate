@@ -41,6 +41,9 @@ TestCase {
         compare(Utils.format_value('cpu_min_perf', undefined), '')
         compare(Utils.format_value('gpu_min_limit', '300.4'), '300')
         compare(Utils.format_value('battery_remaining_time', 5400), '1:30')
+        compare(Utils.format_value('battery_remaining_time', 1800), '0:30')
+        compare(Utils.format_value('battery_remaining_time', 0), '')
+        compare(Utils.format_value('battery_remaining_time', undefined), '')
         compare(Utils.format_value('fan_speeds', {'a': '2100.4', 'b': undefined, 'c': '0'}), '2100 RPM | 0 RPM')
     }
 
