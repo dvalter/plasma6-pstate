@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "jsalatas@ictpro.gr",
+                "Name": "John Salatas"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Intel P-state and CPUFreq Manager",
+        "Icon": "cpu",
+        "Id": "gr.ictpro.jsalatas.plasma.pstate",
+        "License": "GPL2+",
+        "Name": "Intel P-state and CPUFreq Manager",
+        "Version": "2.0.0",
+        "Website": "https://jsalatas.ictpro.gr"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
