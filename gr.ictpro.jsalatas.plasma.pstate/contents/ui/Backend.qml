@@ -69,14 +69,38 @@ Item {
         var newPending = Object.assign({}, pending)
         newPending[name] = value
         pending = newPending
-        updater.write(name, value)
+
+        var command = 'sudo ' + scriptPath + ' -' + name.replace(/_/g, '-') + ' ' + value
+        runner.run(command, (exitCode, stdout, stderr) => {
+            if(exitCode > 0) {
+                console.warn('Changing ' + name + ' failed: ' + stderr)
+            }
+            settingWritten(name)
+        })
     }
 
     function settingWritten(name) {
         var newPending = Object.assign({}, pending)
         delete newPending[name]
         pending = newPending
-        monitorDS.read()
+        read()
+    }
+
+    property bool reading: false
+
+    function read() {
+        if(reading) {
+            return
+        }
+        reading = true
+        runner.run(readCommand, (exitCode, stdout, stderr) => {
+            reading = false
+            if(exitCode > 0) {
+                console.warn('Reading the settings failed: ' + stderr)
+            } else {
+                setValues(JSON.parse(stdout))
+            }
+        })
     }
 
     // The systemmonitor dataengine is gone in Plasma 6, use ksystemstats sensors instead
@@ -137,55 +161,17 @@ Item {
         interval: 2000
     }
 
-    P5Support.DataSource {
-        id: monitorDS
-        engine: 'executable'
+    CommandRunner {
+        id: runner
+    }
 
-        property string command
-
-        // Read now rather than at the next interval
-        function read() {
-            if(command) {
-                disconnectSource(command)
-            }
-            command = readCommand
-            connectSource(command)
-        }
-
-        Component.onCompleted: read()
-
-        onNewData: (sourceName, data) => {
-            if (data['exit code'] > 0) {
-                console.warn('Reading the settings failed: ' + data.stderr)
-            } else {
-                setValues(JSON.parse(data.stdout))
-            }
-        }
+    Timer {
         interval: 2000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: read()
     }
 
-    onReadCommandChanged: monitorDS.read()
-
-    P5Support.DataSource {
-        id: updater
-        engine: 'executable'
-
-        // The setting each running command changes
-        property var settings: ({})
-
-        onNewData: (command, data) => {
-            disconnectSource(command)
-            if (data['exit code'] > 0) {
-                console.warn('Changing ' + settings[command] + ' failed: ' + data.stderr)
-            }
-            settingWritten(settings[command])
-            delete settings[command]
-        }
-
-        function write(name, value) {
-            var command = 'sudo ' + scriptPath + ' -' + name.replace(/_/g, '-') + ' ' + value
-            settings[command] = name
-            connectSource(command)
-        }
-    }
+    onReadCommandChanged: read()
 }
