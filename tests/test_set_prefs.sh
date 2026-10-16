@@ -59,6 +59,37 @@ for cpu in 0 1 2 3; do
 done
 echo "ok   - governor applied to all cpus"
 
+# reject <option> <value>: the value must be refused and nothing changed
+reject() {
+    local before after
+    before=$("$SCRIPT" -read-all)
+    if "$SCRIPT" "$1" "$2" 2> /dev/null; then
+        echo "FAIL - $1 accepted '$2'"
+        failures=$((failures + 1))
+        return
+    fi
+    after=$("$SCRIPT" -read-all)
+    if [ "$before" != "$after" ]; then
+        echo "FAIL - rejected $1 '$2' still changed settings"
+        failures=$((failures + 1))
+        return
+    fi
+    echo "ok   - $1 rejects '$2'"
+}
+
+reject -cpu-min-perf ""
+reject -cpu-min-perf 101
+reject -cpu-max-perf "50 51"
+reject -cpu-turbo yes
+reject -gpu-max-freq -100
+reject -cpu-governor "performance; reboot"
+reject -cpu-governor "../../../etc/passwd"
+reject -energy-perf balance
+reject -thermal-mode "--help"
+reject -lg-fan-mode 1
+reject -powermizer 3
+reject -powermizer "1 --assign=Foo=1"
+
 chmod a-w "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
 if "$SCRIPT" -cpu-max-perf 50 2> /dev/null; then
     echo "FAIL - failed write exits with 0"

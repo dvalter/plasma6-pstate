@@ -25,18 +25,16 @@ write() {
     done
 }
 
-# write_nonzero <value> <file>: like write, but ignores empty values and 0
+# write_nonzero <value> <file>: like write, but ignores 0
 write_nonzero() {
-    if [ -n "$1" ] && [ "$1" != "0" ]; then
+    if [ "$1" != "0" ]; then
         write "$1" "$2"
     fi
 }
 
 # write_bool <value> <file> <value for true> <value for false>
 write_bool() {
-    if [ -z "$1" ]; then
-        return
-    elif [ "$1" == "true" ]; then
+    if [ "$1" == "true" ]; then
         write "$3" "$2"
     else
         write "$4" "$2"
@@ -65,14 +63,7 @@ has_nvidia() {
     nvidia-settings -q GpuPowerMizerMode > /dev/null 2>&1
 }
 
-set_cpu_governor() {
-    if [ -n "$1" ]; then
-        write "$1" "$CPU"/cpu*/cpufreq/scaling_governor
-    fi
-}
-
 set_energy_perf() {
-    [ -z "$1" ] && return
     if [ -f "$CPU/cpu0/cpufreq/energy_performance_preference" ]; then
         write "$1" "$CPU"/cpu*/cpufreq/energy_performance_preference
     else
@@ -173,22 +164,40 @@ usage() {
     exit 3
 }
 
+# This runs as root, so only accept the values the widget can send.
+PERCENT='[0-9]|[1-9][0-9]|100'
+MHZ='[0-9]{1,5}'
+BOOL='true|false'
+GOVERNOR='[a-z_]+'
+ENERGY_PERF='default|performance|balance_performance|balance_power|power'
+THERMAL_MODE='performance|balanced|cool-bottom|quiet'
+POWERMIZER='[0-2]'
+
+# accept <regex>: exits unless the value matches regex
+accept() {
+    if ! [[ $value =~ ^($1)$ ]]; then
+        echo "set_prefs.sh: invalid value for $option: '$value'" >&2
+        exit 2
+    fi
+}
+
+option=$1
 value=$2
 
-case $1 in
-    -cpu-min-perf)            write_nonzero "$value" "$INTEL_PSTATE/min_perf_pct" ;;
-    -cpu-max-perf)            write_nonzero "$value" "$INTEL_PSTATE/max_perf_pct" ;;
-    -cpu-turbo)               write_bool "$value" "$INTEL_PSTATE/no_turbo" 0 1 ;;
-    -gpu-min-freq)            write_nonzero "$value" "$GPU/gt_min_freq_mhz" ;;
-    -gpu-max-freq)            write_nonzero "$value" "$GPU/gt_max_freq_mhz" ;;
-    -gpu-boost-freq)          write_nonzero "$value" "$GPU/gt_boost_freq_mhz" ;;
-    -cpu-governor)            set_cpu_governor "$value" ;;
-    -energy-perf)             set_energy_perf "$value" ;;
-    -thermal-mode)            smbios-thermal-ctl --set-thermal-mode="$value" 2> /dev/null ;;
-    -lg-battery-charge-limit) write_bool "$value" "$LG_LAPTOP/battery_care_limit" 80 100 ;;
-    -lg-fan-mode)             write_bool "$value" "$LG_LAPTOP/fan_mode" 0 1 ;;
-    -lg-usb-charge)           write_bool "$value" "$LG_LAPTOP/usb_charge" 1 0 ;;
-    -powermizer)              nvidia-settings -a "[gpu:0]/GpuPowerMizerMode=$value" 2> /dev/null ;;
+case $option in
+    -cpu-min-perf)            accept "$PERCENT";      write_nonzero "$value" "$INTEL_PSTATE/min_perf_pct" ;;
+    -cpu-max-perf)            accept "$PERCENT";      write_nonzero "$value" "$INTEL_PSTATE/max_perf_pct" ;;
+    -cpu-turbo)               accept "$BOOL";         write_bool "$value" "$INTEL_PSTATE/no_turbo" 0 1 ;;
+    -gpu-min-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_min_freq_mhz" ;;
+    -gpu-max-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_max_freq_mhz" ;;
+    -gpu-boost-freq)          accept "$MHZ";          write_nonzero "$value" "$GPU/gt_boost_freq_mhz" ;;
+    -cpu-governor)            accept "$GOVERNOR";     write "$value" "$CPU"/cpu*/cpufreq/scaling_governor ;;
+    -energy-perf)             accept "$ENERGY_PERF";  set_energy_perf "$value" ;;
+    -thermal-mode)            accept "$THERMAL_MODE"; smbios-thermal-ctl --set-thermal-mode="$value" 2> /dev/null ;;
+    -lg-battery-charge-limit) accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/battery_care_limit" 80 100 ;;
+    -lg-fan-mode)             accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/fan_mode" 0 1 ;;
+    -lg-usb-charge)           accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/usb_charge" 1 0 ;;
+    -powermizer)              accept "$POWERMIZER";   nvidia-settings -a "[gpu:0]/GpuPowerMizerMode=$value" 2> /dev/null ;;
     -read-all)                read_all ;;
     *)                        usage ;;
 esac
