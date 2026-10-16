@@ -17,19 +17,20 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.0 as QtControls
+import QtQuick
+import QtQuick.Layouts
 
-import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.extras 2.0 as PlasmaExtras
+import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasma5support as P5Support
+import org.kde.ksysguard.sensors as Sensors
+import org.kde.kirigami as Kirigami
 
 import '../code/utils.js' as Utils
 
-Item {
+PlasmoidItem {
     id: main
-    
+
     signal sensorsValuesChanged
     signal dataSourceReady
     signal updateSensor(string name, string value)
@@ -39,37 +40,25 @@ Item {
         source: '../font/plasma-pstate.ttf'
     }
 
-    property var monitor_sources: [/cpu\/system\/AverageClock/g, /cpu\/system\/TotalLoad/g, /lmsensors\/.*Package_id_0/g, /lmsensors\/.*fan/g]
     property var sensors_model: Utils.get_sensors()
     property alias isReady: monitorDS.isReady
-    property bool inTray: (plasmoid.parent === null || plasmoid.parent.objectName === 'taskItemContainer')
-    property var readCommand: (plasmoid.configuration.useSudoForReading ? 'sudo ' : '') + '/usr/share/plasma/plasmoids/gr.ictpro.jsalatas.plasma.pstate/contents/code/set_prefs.sh -read-all'
+    property bool inTray: (Plasmoid.containmentDisplayHints & PlasmaCore.Types.ContainmentDrawsPlasmoidHeading) !== 0
+    property string scriptPath: '/usr/share/plasma/plasmoids/gr.ictpro.jsalatas.plasma.pstate/contents/code/set_prefs.sh'
+    property string readCommand: (Plasmoid.configuration.useSudoForReading ? 'sudo ' : '') + scriptPath + ' -read-all'
 
-    function sensor_short_name(long_name) {
-        var parts = long_name.split('/');
-        return parts[parts.length - 1];
-    }
+    compactRepresentation: CompactRepresentation { }
+    fullRepresentation: FullRepresentation { }
 
-    Plasmoid.compactRepresentation: CompactRepresentation { }
-    Plasmoid.fullRepresentation: FullRepresentation { }
+    preferredRepresentation: compactRepresentation
+    switchWidth: Kirigami.Units.gridUnit * 15
+    switchHeight: Kirigami.Units.gridUnit * 20
 
-    Plasmoid.preferredRepresentation: Plasmoid.compactRepresentation
-    Plasmoid.switchWidth: units.gridUnit * 15
-    Plasmoid.switchHeight: units.gridUnit * 20
+    toolTipMainText: '' //i18n('Intel pstate and Thermal Management')
+    toolTipSubText: ''
+    toolTipTextFormat: Text.RichText
+    Plasmoid.icon: 'cpu'
 
-
-    Plasmoid.toolTipMainText: '' //i18n('Intel pstate and Thermal Management')
-    Plasmoid.toolTipSubText: ''
-    Plasmoid.toolTipTextFormat: Text.RichText
-    Plasmoid.icon: ''
-
-    Component.onCompleted: {
-        if (!inTray) {
-            // not in tray
-        }
-    }
-
-    onUpdateSensor: {
+    onUpdateSensor: (name, value) => {
         print("updating sensor " + name +": " + value)
         if(value != sensors_model[name]['value']) {
             updater.update(name, value)
@@ -101,81 +90,25 @@ Item {
         return res || 'N/A';
     }
 
-    function monitor_source(src) {
-        for(var i=0; i < monitor_sources.length; i++) {
-            if(src.match(monitor_sources[i])) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     onSensorsValuesChanged: {
         updateTooltip();
     }
 
-    PlasmaCore.DataSource {
-        id: systemmonitorDS
-        engine: 'systemmonitor'
-        property var seenSources: []
-
-        onSourceAdded: {
-             if(monitor_source(source)) {
-                 if(systemmonitorDS.connectedSources.indexOf(source) == -1) {
-                     systemmonitorDS.connectedSources.push(source);
-                 }
-            }
-        }
-
-        onNewData: {
-            var show = false
-            if(systemmonitorDS.seenSources.indexOf(sourceName) == -1 && data.value != undefined) {
-                systemmonitorDS.seenSources.push(sourceName)
-            }
-
-            var source_short_name = sensor_short_name(sourceName);
-
-            if(source_short_name.startsWith('fan')) {
-                if (sensors_model['fan_speeds'] != undefined && sensors_model['fan_speeds']['value'] != undefined) {
-                    sensors_model['fan_speeds']['value'][source_short_name] = data.value;
-                }
-            } else {
-                switch (source_short_name) {
-                    case 'AverageClock': {
-                        sensors_model['cpu_cur_freq']['value'] = data.value
-                        break;
-                    }
-                    case 'Package_id_0': {
-                        sensors_model['package_temp']['value'] = data.value
-                        break;
-                    }
-                    case 'TotalLoad': {
-                        sensors_model['cpu_cur_load']['value'] = data.value
-                        break;
-                    }
-                }
-            }
-
+    // The systemmonitor dataengine is gone in Plasma 6, use ksystemstats sensors instead
+    component SystemSensor: Sensors.Sensor {
+        property string modelKey
+        updateRateLimit: 2000
+        onValueChanged: {
+            sensors_model[modelKey]['value'] = value
             sensorsValuesChanged()
         }
-
-        Component.onCompleted: {
-            systemmonitorDS.connectedSources = [];
-            systemmonitorDS.connectedSources.length = 0;
-
-            for(var i=0; i< systemmonitorDS.sources.length; i++) {
-                if(monitor_source(systemmonitorDS.sources[i])) {
-                    if(systemmonitorDS.connectedSources.indexOf(systemmonitorDS.sources[i]) == -1) {
-                        systemmonitorDS.connectedSources.push(systemmonitorDS.sources[i]);
-                    }
-                }
-            }
-        }
-        interval: 2000
     }
 
-    PlasmaCore.DataSource {
+    SystemSensor { sensorId: 'cpu/all/averageFrequency'; modelKey: 'cpu_cur_freq' }
+    SystemSensor { sensorId: 'cpu/all/usage'; modelKey: 'cpu_cur_load' }
+    SystemSensor { sensorId: 'cpu/all/maximumTemperature'; modelKey: 'package_temp' }
+
+    P5Support.DataSource {
         id: powermanagementDS
         engine: "powermanagement"
         connectedSources: ['Battery']
@@ -189,24 +122,15 @@ Item {
         interval: 2000
     }
 
-    Connections {
-        target: plasmoid.configuration
-        onUseSudoForReadingChanged: {
-            monitorDS.commandSource = readCommand
-            monitorDS.connectedSources = [];
-            monitorDS.connectedSources.length = 0;
-            monitorDS.connectedSources.push(monitorDS.commandSource);
-        }
-    }
-
-    PlasmaCore.DataSource {
+    P5Support.DataSource {
         id: monitorDS
         engine: 'executable'
 
         property bool isReady: false
-        property string commandSource: readCommand
 
-        onNewData: {
+        connectedSources: [readCommand]
+
+        onNewData: (sourceName, data) => {
             if (data['exit code'] > 0) {
                 print('monitorDS error: ' + data.stderr)
             } else {
@@ -222,39 +146,26 @@ Item {
                 sensorsValuesChanged();
             }
         }
-        Component.onCompleted: {
-            monitorDS.connectedSources = [];
-            monitorDS.connectedSources.length = 0;
-            monitorDS.connectedSources.push(monitorDS.commandSource);
-
-        }
         interval: 2000
     }
 
-    PlasmaCore.DataSource {
+    P5Support.DataSource {
         id: updater
         engine: 'executable'
 
-        property string commandSource: 'sudo /usr/share/plasma/plasmoids/gr.ictpro.jsalatas.plasma.pstate/contents/code/set_prefs.sh -'
-
-        onNewData: {
-            updater.connectedSources = []
-            updater.connectedSources.length = 0
+        onNewData: (sourceName, data) => {
+            disconnectSource(sourceName)
             if (data['exit code'] > 0) {
                 print("    error: " + data.stderr)
             } else {
                 print("    done")
             }
         }
-        Component.onCompleted: {
-            updater.connectedSources = [];
-            updater.connectedSources.length = 0;
-        }
-        function update(parameter, value) {
-            var command = updater.commandSource + parameter.replace(/_/g, '-') + ' ' + value
-            print("exec: " + command)
-            updater.connectedSources.push(command);
 
+        function update(parameter, value) {
+            var command = 'sudo ' + scriptPath + ' -' + parameter.replace(/_/g, '-') + ' ' + value
+            print("exec: " + command)
+            connectSource(command)
         }
     }
 
@@ -298,6 +209,6 @@ Item {
         }
         toolTipSubText += '</table></font>'
 
-        Plasmoid.toolTipSubText = toolTipSubText
+        main.toolTipSubText = toolTipSubText
     }
 }

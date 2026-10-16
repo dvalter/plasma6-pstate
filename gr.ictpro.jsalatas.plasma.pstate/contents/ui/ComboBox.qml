@@ -17,10 +17,10 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
-import org.kde.plasma.components 3.0 as PlasmaComponents3
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 RowLayout {
     Layout.fillWidth: true
@@ -44,15 +44,15 @@ RowLayout {
 
     Component.onCompleted: {
         acceptingChanges = true
-        sensorsValuesChanged()
+        main.sensorsValuesChanged()
     }
 
     Connections {
         target: main
-        onSensorsValuesChanged: {
+        function onSensorsValuesChanged() {
             acceptingChanges = false
             if(sensor.length != 0) {
-                var value = sensors_model[sensor[0]]['value'];
+                var value = main.sensors_model[sensor[0]]['value'];
                 for(var i = 0; i < combobox.model.length; i++) {
                     if(combobox.model[i].sensor_value == value) {
                         combobox.currentIndex = i
@@ -66,18 +66,18 @@ RowLayout {
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignVCenter
         id: combobox_title
-        font.pointSize: theme.smallestFont.pointSize
-        color: theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
-        Layout.minimumWidth: units.gridUnit * 4
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 4
     }
 
-    PlasmaComponents3.ComboBox {
+    PlasmaComponents.ComboBox {
         id: combobox
         textRole: "text"
         onActivated: {
             if(acceptingChanges) {
-                updateSensor(sensor[0], combobox.model[currentIndex].sensor_value)
+                main.updateSensor(sensor[0], combobox.model[currentIndex].sensor_value)
             }
 
         }

@@ -17,9 +17,11 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.plasma.plasmoid
+import org.kde.kirigami as Kirigami
 
 ColumnLayout {
     id: group
@@ -33,7 +35,7 @@ ColumnLayout {
     onPropsChanged: {
         text = props['text']
         items = props['items']
-        visible = props['visible'] == undefined || eval('plasmoid.configuration.' + props['visible'])
+        visible = props['visible'] == undefined || Plasmoid.configuration[props['visible']]
     }
 
     Component {
@@ -41,7 +43,7 @@ ColumnLayout {
         Slider {
             Layout.topMargin: 5
             Layout.bottomMargin: 5
-            Layout.minimumWidth: units.gridUnit * 18
+            Layout.minimumWidth: Kirigami.Units.gridUnit * 18
         }
     }
 
@@ -71,8 +73,8 @@ ColumnLayout {
 
     PlasmaComponents.Label {
         id: group_title
-        font.pointSize: theme.smallestFont.pointSize * 1.25
-        color: theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
+        color: Kirigami.Theme.textColor
         visible: text != ''
     }
 }

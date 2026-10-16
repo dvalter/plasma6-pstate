@@ -17,13 +17,14 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 RowLayout {
-    property alias min: slider.minimumValue
-    property alias max: slider.maximumValue
+    property alias min: slider.from
+    property alias max: slider.to
     property alias value: slider.value
     property bool acceptingChanges: false
     property alias pressed: slider.pressed
@@ -62,24 +63,24 @@ RowLayout {
 
     Component.onCompleted: {
         acceptingChanges = true
-        sensorsValuesChanged()
+        main.sensorsValuesChanged()
     }
 
     Connections {
         target: main
-        onSensorsValuesChanged: {
+        function onSensorsValuesChanged() {
             if(!pressed) {
                 acceptingChanges = false
                 if(sensor.length != 0) {
-                    value = parseInt(sensors_model[sensor[0]]['value'], 10);
-                    slider_value.text = get_sensors_text(sensor);
+                    value = parseInt(main.sensors_model[sensor[0]]['value'], 10);
+                    slider_value.text = main.get_sensors_text(sensor);
                     updating = false
                 }
                 if(min_sensor.length != 0) {
-                    min = parseInt(sensors_model[min_sensor[0]]['value'], 10);
+                    min = parseInt(main.sensors_model[min_sensor[0]]['value'], 10);
                 }
                 if(max_sensor.length != 0) {
-                    max = parseInt(sensors_model[max_sensor[0]]['value'], 10);
+                    max = parseInt(main.sensors_model[max_sensor[0]]['value'], 10);
                 }
                 acceptingChanges = true
             }
@@ -89,10 +90,10 @@ RowLayout {
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignTop
         id: slider_title
-        font.pointSize: theme.smallestFont.pointSize
-        color: theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
-        Layout.minimumWidth: units.gridUnit * 4
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 4
     }
 
     PlasmaComponents.Slider {
@@ -103,16 +104,16 @@ RowLayout {
         onPressedChanged: {
             //need to resend here
             if(acceptingChanges) {
-                updateSensor(sensor[0], value)
+                main.updateSensor(sensor[0], value)
             }
         }
         onValueChanged: {
             if(pressed) {
                 updating = true
-                slider_value.text = get_value_text(sensor[0], value)
+                slider_value.text = main.get_value_text(sensor[0], value)
             } else {
                 if(acceptingChanges) {
-                    updateSensor(sensor[0], value)
+                    main.updateSensor(sensor[0], value)
                 }
             }
         }
@@ -121,9 +122,9 @@ RowLayout {
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignTop
         id: slider_value
-        font.pointSize: theme.smallestFont.pointSize
-        color: pressed || updating? '#ff0000' : theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: pressed || updating? '#ff0000' : Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
-        Layout.minimumWidth: units.gridUnit * 3
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 3
     }
 }

@@ -17,9 +17,10 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 ColumnLayout {
     id: radio
@@ -53,8 +54,8 @@ ColumnLayout {
 
     PlasmaComponents.Label {
         id: radio_title
-        font.pointSize: theme.smallestFont.pointSize * 1.25
-        color: theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
+        color: Kirigami.Theme.textColor
         visible: text != ''
     }
     RowLayout {
@@ -63,6 +64,6 @@ ColumnLayout {
         Layout.topMargin: radio_title.visible ? 0 : 8
         Layout.rightMargin: 15
 
-        height: units.gridUnit * 4
+        height: Kirigami.Units.gridUnit * 4
     }
 }

@@ -17,27 +17,28 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.2
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import org.kde.plasma.plasmoid
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 Item {
-    PlasmaCore.IconItem {
+    Kirigami.Icon {
         id: customIcon
         anchors.fill: parent
-        visible: !plasmoid.configuration.useDefaultIcon
-        source: plasmoid.configuration.customIcon
+        visible: !Plasmoid.configuration.useDefaultIcon
+        source: Plasmoid.configuration.customIcon
     }
 
 
     PlasmaComponents.Label {
         anchors.fill: parent
-        visible: plasmoid.configuration.useDefaultIcon
+        visible: Plasmoid.configuration.useDefaultIcon
 
         verticalAlignment: Text.AlignVCenter
         horizontalAlignment: Text.AlignHCenter
 
-        font.pixelSize: Math.min(parent.height, parent.width) * (inTray ? 1: 0.7)
+        font.pixelSize: Math.min(parent.height, parent.width) * (main.inTray ? 1: 0.7)
         font.pointSize: -1
         font.family: symbolsFont.name
 
@@ -48,7 +49,7 @@ Item {
         id: mousearea
         anchors.fill: parent
         onClicked: {
-            plasmoid.expanded = !plasmoid.expanded
+            main.expanded = !main.expanded
         }
     }
 }

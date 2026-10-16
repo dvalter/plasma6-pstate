@@ -17,9 +17,10 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 RowLayout {
     property alias text: checkbox_title.text
@@ -40,16 +41,16 @@ RowLayout {
 
     Component.onCompleted: {
         acceptingChanges = true
-        sensorsValuesChanged()
+        main.sensorsValuesChanged()
     }
 
     Connections {
         target: main
-        onSensorsValuesChanged: {
+        function onSensorsValuesChanged() {
             acceptingChanges = false
 
             if(sensor.length != 0) {
-                checked = sensors_model[sensor[0]]['value'] == 'true';
+                checked = main.sensors_model[sensor[0]]['value'] == 'true';
             }
 
             acceptingChanges = true
@@ -59,17 +60,17 @@ RowLayout {
     PlasmaComponents.Label {
         Layout.alignment: Qt.AlignVCenter
         id: checkbox_title
-        font.pointSize: theme.smallestFont.pointSize
-        color: theme.textColor
+        font.pointSize: Kirigami.Theme.smallFont.pointSize
+        color: Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
-        Layout.minimumWidth: units.gridUnit * 4
+        Layout.minimumWidth: Kirigami.Units.gridUnit * 4
     }
 
     PlasmaComponents.CheckBox {
         id: checkBox
         onCheckedChanged: {
             if(acceptingChanges) {
-                updateSensor(sensor[0], checked)
+                main.updateSensor(sensor[0], checked)
             }
         }
     }

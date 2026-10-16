@@ -17,17 +17,18 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.plasmoid
+import org.kde.kirigami as Kirigami
 
 import '../code/utils.js' as Utils
 
 Column {
     id: fullRoot
     spacing: 0.1
-    Layout.minimumWidth: units.gridUnit * 15
-    Layout.minimumHeight: units.gridUnit * 20
+    Layout.minimumWidth: Kirigami.Units.gridUnit * 15
+    Layout.minimumHeight: Kirigami.Units.gridUnit * 20
 
     property var model: Utils.get_model()
     property var vendors: Utils.get_vendors()
@@ -39,33 +40,29 @@ Column {
     }
 
     Component.onCompleted: {
-        if(isReady) {
+        if(main.isReady) {
             initialize()
-            sensorsValuesChanged()
+            main.sensorsValuesChanged()
         }
     }
 
     Connections {
         target: main
-        onDataSourceReady: {
+        function onDataSourceReady() {
             initialize()
-            sensorsValuesChanged()
+            main.sensorsValuesChanged()
         }
     }
 
     Connections {
-        target: plasmoid.configuration
-        onShowIntelGPUChanged: {
-            if(isReady) {
+        target: Plasmoid.configuration
+        function onShowIntelGPUChanged() {
+            if(main.isReady) {
                 initialize()
             }
         }
-    }
-
-    Connections {
-        target: plasmoid.configuration
-        onUseSudoForReadingChanged: {
-            if(isReady) {
+        function onUseSudoForReadingChanged() {
+            if(main.isReady) {
                 initialize()
             }
         }
@@ -76,7 +73,7 @@ Column {
             for(var j=0; j< item_vendors.length; j++) {
                 var vendor = vendors[item_vendors[j]]
                 for(var k=0; k<vendor['provides'].length; k++) {
-                    if(sensors_model[vendor['provides'][k]]['value']) {
+                    if(main.sensors_model[vendor['provides'][k]]['value']) {
                         return true;
                         break;
                     }

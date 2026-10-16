@@ -17,9 +17,10 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.6
-import QtQuick.Layouts 1.1
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import QtQuick.Layouts
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 Row {
     id: header
@@ -68,8 +69,8 @@ Row {
 
     Connections {
         target: main
-        onSensorsValuesChanged: {
-            sensors_label.text = get_sensors_text(sensors);
+        function onSensorsValuesChanged() {
+            sensors_label.text = main.get_sensors_text(sensors);
         }
     }
 
@@ -115,21 +116,21 @@ Row {
         PlasmaComponents.Label {
             id: icon
 
-            width: units.gridUnit * 2.2
+            width: Kirigami.Units.gridUnit * 2.2
             Layout.minimumWidth : width
 
             horizontalAlignment: Text.AlignHCenter
 
-            font.pointSize: theme.smallestFont.pointSize * 2.5
+            font.pointSize: Kirigami.Theme.smallFont.pointSize * 2.5
             font.family: symbolsFont.name
-            color: theme.textColor
+            color: Kirigami.Theme.textColor
         }
 
         PlasmaComponents.Label {
             id: title
 
-            font.pointSize: theme.smallestFont.pointSize * 2
-            color: theme.textColor
+            font.pointSize: Kirigami.Theme.smallFont.pointSize * 2
+            color: Kirigami.Theme.textColor
         }
 
         PlasmaComponents.Label  {
@@ -142,8 +143,8 @@ Row {
 
             Layout.bottomMargin: 5
 
-            font.pointSize: theme.smallestFont.pointSize * 1.25
-            color: theme.textColor
+            font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
+            color: Kirigami.Theme.textColor
             opacity: 0.8
 
             visible: sensors_label.text != 'N/A'

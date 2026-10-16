@@ -17,12 +17,13 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-import QtQuick 2.3
-import org.kde.plasma.components 2.0 as PlasmaComponents
+import QtQuick
+import org.kde.plasma.components as PlasmaComponents
+import org.kde.kirigami as Kirigami
 
 Item {
-    width: units.gridUnit * 4.2
-    height: units.gridUnit * 4
+    width: Kirigami.Units.gridUnit * 4.2
+    height: Kirigami.Units.gridUnit * 4
 
     objectName: "PushButton"
 
@@ -34,20 +35,20 @@ Item {
     property var sensor: []
     property bool acceptingChanges: false
 
-    property color borderColor: updating ? '#ff0000' : (active ? Qt.rgba(theme.highlightColor.r, theme.highlightColor.g, theme.highlightColor.b, 0.6) :
-                                         Qt.rgba(theme.textColor.r,      theme.textColor.g,      theme.textColor.b,      0.4))
-    property color buttonColor: active ? theme.highlightColor : theme.textColor
+    property color borderColor: updating ? '#ff0000' : (active ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.6) :
+                                         Qt.rgba(Kirigami.Theme.textColor.r,      Kirigami.Theme.textColor.g,      Kirigami.Theme.textColor.b,      0.4))
+    property color buttonColor: active ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
 
     Component.onCompleted: {
-        sensorsValuesChanged()
+        main.sensorsValuesChanged()
     }
 
     Connections {
         target: main
-        onSensorsValuesChanged: {
+        function onSensorsValuesChanged() {
             acceptingChanges = false
             updating = false
-            active = sensors_model[sensor[0]]['value'] == sensor_value
+            active = main.sensors_model[sensor[0]]['value'] == sensor_value
             acceptingChanges = true
         }
     }
@@ -65,7 +66,7 @@ Item {
             onClicked: {
                 if(acceptingChanges) {
                     updating = true
-                    updateSensor(sensor[0], sensor_value)
+                    main.updateSensor(sensor[0], sensor_value)
                 }
             }
         }
@@ -73,7 +74,7 @@ Item {
         PlasmaComponents.Label {
             id: icon
             anchors {
-                margins: units.smallSpacing *1.5
+                margins: Kirigami.Units.smallSpacing *1.5
                 right: parent.right
                 left: parent.left
                 top: parent.top
@@ -82,7 +83,7 @@ Item {
             verticalAlignment: Text.AlignTop
             horizontalAlignment: Text.AlignHCenter
 
-            font.pointSize: theme.smallestFont.pointSize * 2.8
+            font.pointSize: Kirigami.Theme.smallFont.pointSize * 2.8
             font.family: symbolsFont.name
             color: buttonColor
  
@@ -92,7 +93,7 @@ Item {
         PlasmaComponents.Label {
             id: label
             anchors {
-                margins: units.smallSpacing * 1.5
+                margins: Kirigami.Units.smallSpacing * 1.5
                 right: parent.right
                 left: parent.left
                 bottom: parent.bottom
@@ -102,7 +103,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
 
             wrapMode: Text.WordWrap
-            font.pointSize: theme.smallestFont.pointSize * 0.9
+            font.pointSize: Kirigami.Theme.smallFont.pointSize * 0.9
             lineHeight: 0.75
 
             color: buttonColor
