@@ -1,0 +1,12 @@
+#!/bin/bash
+# Mock nvidia-settings, state kept next to the fake sysfs tree
+STATE=$PLASMA_PSTATE_SYSFS/../nvidia_powermizer
+case $1 in
+    -q)
+        echo "  Attribute 'GPUPowerMizerMode' (host:0[gpu:0]): $(cat "$STATE")."
+        ;;
+    -a)
+        echo "${2##*=}" > "$STATE"
+        ;;
+    *) exit 1 ;;
+esac

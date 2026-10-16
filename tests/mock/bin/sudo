@@ -1,0 +1,3 @@
+#!/bin/bash
+# Mock sudo: run the command as the current user, keeping the environment
+exec "$@"

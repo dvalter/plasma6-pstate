@@ -1,0 +1,16 @@
+#!/bin/bash
+# Mock Dell smbios-thermal-ctl, state kept next to the fake sysfs tree
+STATE=$PLASMA_PSTATE_SYSFS/../dell_thermal_mode
+case $1 in
+    -g)
+        echo "Print current status of thermal modes"
+        echo "-----------------------------------------"
+        echo "Current Thermal Modes:"
+        printf '\t%s\n' "$(cat "$STATE")"
+        ;;
+    --set-thermal-mode=*)
+        mode=${1#--set-thermal-mode=}
+        echo "$mode" | sed 's/-/ /g; s/\b\(.\)/\u\1/g' > "$STATE"
+        ;;
+    *) exit 1 ;;
+esac
