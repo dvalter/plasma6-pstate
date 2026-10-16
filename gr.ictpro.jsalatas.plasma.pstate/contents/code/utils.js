@@ -158,6 +158,21 @@ var model =  [
     }
 ]
 
+// Walk a ksysguard SensorTreeModel and return the ids of all sensors matching
+// pattern. Needed because SensorDataModel doesn't resolve wildcards.
+function find_sensor_ids(tree, idRole, pattern, parent) {
+    var res = [];
+    for(var i = 0; i < tree.rowCount(parent); i++) {
+        var index = tree.index(i, 0, parent);
+        var id = tree.data(index, idRole);
+        if(id && pattern.test(id)) {
+            res.push(id);
+        }
+        res = res.concat(find_sensor_ids(tree, idRole, pattern, index));
+    }
+    return res;
+}
+
 function get_model() {
     return model;
 }

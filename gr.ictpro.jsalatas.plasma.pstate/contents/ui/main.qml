@@ -108,6 +108,36 @@ PlasmoidItem {
     SystemSensor { sensorId: 'cpu/all/usage'; modelKey: 'cpu_cur_load' }
     SystemSensor { sensorId: 'cpu/all/maximumTemperature'; modelKey: 'package_temp' }
 
+    property var fanSensorIds: []
+
+    Sensors.SensorTreeModel {
+        id: sensorTree
+
+        function findFans() {
+            var ids = Utils.find_sensor_ids(sensorTree, Sensors.SensorTreeModel.SensorId,
+                                            /^lmsensors\/[\w.-]+\/fan\d+$/, sensorTree.index(-1, -1))
+            if(ids.join() != fanSensorIds.join()) {
+                fanSensorIds = ids
+            }
+        }
+
+        onRowsInserted: findFans()
+        onModelReset: findFans()
+    }
+
+    Instantiator {
+        model: fanSensorIds
+        delegate: Sensors.Sensor {
+            required property string modelData
+            sensorId: modelData
+            updateRateLimit: 2000
+            onValueChanged: {
+                sensors_model['fan_speeds']['value'][sensorId] = value
+                sensorsValuesChanged()
+            }
+        }
+    }
+
     P5Support.DataSource {
         id: powermanagementDS
         engine: "powermanagement"
