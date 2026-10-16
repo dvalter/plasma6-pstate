@@ -1,11 +1,21 @@
 #!/bin/bash
 
-INTEL_PSTATE=/sys/devices/system/cpu/intel_pstate
+# PLASMA_PSTATE_SYSFS lets the widget run against a fake sysfs tree for
+# testing. It is ignored when running as root, so it can't be abused through
+# the sudoers rule.
+SYSFS=/sys
+if [ "$EUID" -ne 0 ] && [ -n "$PLASMA_PSTATE_SYSFS" ]; then
+    SYSFS=$PLASMA_PSTATE_SYSFS
+fi
+
+CPU=$SYSFS/devices/system/cpu
+
+INTEL_PSTATE=$CPU/intel_pstate
 CPU_MIN_PERF=$INTEL_PSTATE/min_perf_pct
 CPU_MAX_PERF=$INTEL_PSTATE/max_perf_pct
 CPU_TURBO=$INTEL_PSTATE/no_turbo
 
-GPU=/sys/class/drm/card0
+GPU=$SYSFS/class/drm/card0
 GPU_MIN_FREQ=$GPU/gt_min_freq_mhz
 GPU_MAX_FREQ=$GPU/gt_max_freq_mhz
 GPU_MIN_LIMIT=$GPU/gt_RP1_freq_mhz
@@ -13,7 +23,7 @@ GPU_MAX_LIMIT=$GPU/gt_RP0_freq_mhz
 GPU_BOOST_FREQ=$GPU/gt_boost_freq_mhz
 GPU_CUR_FREQ=$GPU/gt_cur_freq_mhz
 
-LG_LAPTOP_DRIVER=/sys/devices/platform/lg-laptop
+LG_LAPTOP_DRIVER=$SYSFS/devices/platform/lg-laptop
 LG_FAN_MODE=$LG_LAPTOP_DRIVER/fan_mode
 LG_BATTERY_CHARGE_LIMIT=$LG_LAPTOP_DRIVER/battery_care_limit
 LG_USB_CHARGE=$LG_LAPTOP_DRIVER/usb_charge
@@ -95,7 +105,7 @@ set_gpu_boost_freq () {
 set_cpu_governor () {
     gov=$1
     if [ -n "$gov" ]; then
-        for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+        for cpu in $CPU/cpu*/cpufreq/scaling_governor; do
             printf '%s\n' "$gov" > $cpu; 2> /dev/null
         done
     fi
@@ -104,8 +114,8 @@ set_cpu_governor () {
 set_energy_perf () {
     energyperf=$1
     if [ -n "$energyperf" ]; then
-        if [ -f /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference ]; then
-            for cpu in /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference; do
+        if [ -f $CPU/cpu0/cpufreq/energy_performance_preference ]; then
+            for cpu in $CPU/cpu*/cpufreq/energy_performance_preference; do
                 printf '%s\n' "$energyperf" > $cpu; 2> /dev/null
             done
         else
@@ -176,8 +186,8 @@ gpu_min_limit=`cat $GPU_MIN_LIMIT`
 gpu_max_limit=`cat $GPU_MAX_LIMIT`
 gpu_boost_freq=`cat $GPU_BOOST_FREQ`
 gpu_cur_freq=`cat $GPU_CUR_FREQ`
-cpu_governor=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor`
-energy_perf=`cat /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference`
+cpu_governor=`cat $CPU/cpu0/cpufreq/scaling_governor`
+energy_perf=`cat $CPU/cpu0/cpufreq/energy_performance_preference`
 if [ -z "$energy_perf" ]; then
     energy_perf=`x86_energy_perf_policy -r 2>/dev/null | grep -v 'HWP_' | \
     sed -r 's/://;
