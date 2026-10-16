@@ -35,7 +35,7 @@ Item {
     readonly property bool active: backend.values[sensor] == sensorValue
     readonly property bool updating: active && sensor in backend.pending
 
-    property color borderColor: updating ? '#ff0000' : (active ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.6) :
+    property color borderColor: updating ? Kirigami.Theme.negativeTextColor : (active ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.6) :
                                          Qt.rgba(Kirigami.Theme.textColor.r,      Kirigami.Theme.textColor.g,      Kirigami.Theme.textColor.b,      0.4))
     property color buttonColor: active ? Kirigami.Theme.highlightColor : Kirigami.Theme.textColor
 

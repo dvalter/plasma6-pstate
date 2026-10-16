@@ -80,7 +80,7 @@ RowLayout {
         Layout.alignment: Qt.AlignTop
         text: Utils.format_value(sensor, slider.value)
         font.pointSize: Kirigami.Theme.smallFont.pointSize
-        color: slider.pressed || updating ? '#ff0000' : Kirigami.Theme.textColor
+        color: slider.pressed || updating ? Kirigami.Theme.negativeTextColor : Kirigami.Theme.textColor
         horizontalAlignment: Text.AlignRight
         Layout.minimumWidth: Kirigami.Units.gridUnit * 3
     }
