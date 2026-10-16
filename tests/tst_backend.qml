@@ -64,6 +64,21 @@ TestCase {
         tryVerify(() => !('energy_perf' in backend.pending), 5000)
     }
 
+    function test_read_during_change() {
+        // The read has its data after 150ms, but only returns it after
+        // MOCK_READ_DELAY, when the change has finished
+        backend.read()
+        wait(150)
+        backend.changeSetting('thermal_mode', 'quiet')
+        tryVerify(() => !('thermal_mode' in backend.pending), 5000)
+        for(var i = 0; i < 10; i++) {
+            compare(backend.values['thermal_mode'], 'quiet')
+            wait(100)
+        }
+        backend.changeSetting('thermal_mode', 'balanced')
+        tryVerify(() => !('thermal_mode' in backend.pending), 5000)
+    }
+
     function test_repeated_change() {
         // Changing back to a value written moments ago runs the same command
         // again, which must not be answered from a cache

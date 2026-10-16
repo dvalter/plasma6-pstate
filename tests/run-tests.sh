@@ -11,6 +11,8 @@ QMLTESTRUNNER=${QMLTESTRUNNER:-$(command -v qmltestrunner6 || command -v qmltest
 export PLASMA_PSTATE_SYSFS=$WORK/sys
 export PATH=$HERE/mock/bin:$PATH
 export QT_QPA_PLATFORM=${QT_QPA_PLATFORM:-offscreen}
+# Long enough for settings to change while a read is running
+export MOCK_READ_DELAY=0.3
 
 result=0
 "$HERE/test_set_prefs.sh" || result=1

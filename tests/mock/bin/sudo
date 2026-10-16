@@ -1,3 +1,11 @@
 #!/bin/bash
-# Mock sudo: run the command as the current user, keeping the environment
+# Mock sudo: run the command as the current user, keeping the environment.
+# MOCK_READ_DELAY delays the result of reading the settings, to test races.
+if [ "$2" == "-read-all" ] && [ -n "$MOCK_READ_DELAY" ]; then
+    output=$("$@")
+    status=$?
+    sleep "$MOCK_READ_DELAY"
+    printf '%s\n' "$output"
+    exit $status
+fi
 exec "$@"

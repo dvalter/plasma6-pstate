@@ -39,14 +39,7 @@ Item {
     readonly property string readCommand: (useSudoForReading ? 'sudo ' : '') + scriptPath + ' -read-all'
 
     function setValues(changes) {
-        var newValues = Object.assign({}, values)
-        for(var name in changes) {
-            // Don't let a read that started before a change undo it
-            if(!(name in pending)) {
-                newValues[name] = changes[name]
-            }
-        }
-        values = newValues
+        values = Object.assign({}, values, changes)
     }
 
     function setValue(name, value) {
@@ -69,6 +62,7 @@ Item {
         var newPending = Object.assign({}, pending)
         newPending[name] = value
         pending = newPending
+        changes++
 
         var command = 'sudo ' + scriptPath + ' -' + name.replace(/_/g, '-') + ' ' + value
         runner.run(command, (exitCode, stdout, stderr) => {
@@ -83,9 +77,14 @@ Item {
         var newPending = Object.assign({}, pending)
         delete newPending[name]
         pending = newPending
+        changes++
         read()
     }
 
+    // Counts the settings changes started and finished. A read that ran
+    // while a setting was being changed may return its old value, so its
+    // result is dropped.
+    property int changes: 0
     property bool reading: false
 
     function read() {
@@ -93,9 +92,14 @@ Item {
             return
         }
         reading = true
+        var changesAtStart = changes
         runner.run(readCommand, (exitCode, stdout, stderr) => {
             reading = false
-            if(exitCode > 0) {
+            if(Object.keys(pending).length > 0) {
+                // Read again once the changes are written
+            } else if(changesAtStart != changes) {
+                read()
+            } else if(exitCode > 0) {
                 console.warn('Reading the settings failed: ' + stderr)
             } else {
                 setValues(JSON.parse(stdout))
