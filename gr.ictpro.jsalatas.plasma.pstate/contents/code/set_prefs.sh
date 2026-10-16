@@ -59,14 +59,14 @@ check_nvidia () {
 set_cpu_min_perf () {
     minperf=$1
     if [ -n "$minperf" ] && [ "$minperf" != "0" ]; then
-        printf '%s\n' "$minperf" > $CPU_MIN_PERF; 2> /dev/null
+        printf '%s\n' "$minperf" > $CPU_MIN_PERF
     fi
 }
 
 set_cpu_max_perf () {
     maxperf=$1
     if [ -n "$maxperf" ] && [ "$maxperf" != "0" ]; then
-        printf '%s\n' "$maxperf" > $CPU_MAX_PERF; 2> /dev/null
+        printf '%s\n' "$maxperf" > $CPU_MAX_PERF
     fi
 }
 
@@ -74,9 +74,9 @@ set_cpu_turbo () {
     turbo=$1
     if [ -n "$turbo" ]; then
         if [ "$turbo" == "true" ]; then
-            printf '0\n' > $CPU_TURBO; 2> /dev/null
+            printf '0\n' > $CPU_TURBO
         else
-            printf '1\n' > $CPU_TURBO; 2> /dev/null
+            printf '1\n' > $CPU_TURBO
         fi
     fi
 }
@@ -84,21 +84,21 @@ set_cpu_turbo () {
 set_gpu_min_freq () {
     gpuminfreq=$1
     if [ -n "$gpuminfreq" ] && [ "$gpuminfreq" != "0" ]; then
-        printf '%s\n' "$gpuminfreq" > $GPU_MIN_FREQ; 2> /dev/null
+        printf '%s\n' "$gpuminfreq" > $GPU_MIN_FREQ
     fi
 }
 
 set_gpu_max_freq () {
     gpumaxfreq=$1
     if [ -n "$gpumaxfreq" ] && [ "$gpumaxfreq" != "0" ]; then
-        printf '%s\n' "$gpumaxfreq" > $GPU_MAX_FREQ; 2> /dev/null
+        printf '%s\n' "$gpumaxfreq" > $GPU_MAX_FREQ
     fi
 }
 
 set_gpu_boost_freq () {
     gpuboostfreq=$1
     if [ -n "$gpuboostfreq" ] && [ "$gpuboostfreq" != "0" ]; then
-        printf '%s\n' "$gpuboostfreq" > $GPU_BOOST_FREQ; 2> /dev/null
+        printf '%s\n' "$gpuboostfreq" > $GPU_BOOST_FREQ
     fi
 }
 
@@ -106,7 +106,7 @@ set_cpu_governor () {
     gov=$1
     if [ -n "$gov" ]; then
         for cpu in $CPU/cpu*/cpufreq/scaling_governor; do
-            printf '%s\n' "$gov" > $cpu; 2> /dev/null
+            printf '%s\n' "$gov" > $cpu
         done
     fi
 }
@@ -116,7 +116,7 @@ set_energy_perf () {
     if [ -n "$energyperf" ]; then
         if [ -f $CPU/cpu0/cpufreq/energy_performance_preference ]; then
             for cpu in $CPU/cpu*/cpufreq/energy_performance_preference; do
-                printf '%s\n' "$energyperf" > $cpu; 2> /dev/null
+                printf '%s\n' "$energyperf" > $cpu
             done
         else
             pnum=$(echo $energyperf | sed -r 's/^performance$/0/;
@@ -138,9 +138,9 @@ set_lg_battery_charge_limit(){
     enabled=$1
     if [ -n "$enabled" ]; then
         if [ "$enabled" == "true" ]; then
-            printf '80\n' > $LG_BATTERY_CHARGE_LIMIT; 2> /dev/null
+            printf '80\n' > $LG_BATTERY_CHARGE_LIMIT
         else
-            printf '100\n' > $LG_BATTERY_CHARGE_LIMIT; 2> /dev/null
+            printf '100\n' > $LG_BATTERY_CHARGE_LIMIT
         fi
     fi
 }
@@ -149,9 +149,9 @@ set_lg_fan_mode() {
     enabled=$1
     if [ -n "$enabled" ]; then
         if [ "$enabled" == "true" ]; then
-           printf '0\n' > $LG_FAN_MODE; 2> /dev/null
+           printf '0\n' > $LG_FAN_MODE
         else
-           printf '1\n' > $LG_FAN_MODE; 2> /dev/null
+           printf '1\n' > $LG_FAN_MODE
         fi
     fi
 }
@@ -164,9 +164,9 @@ set_lg_usb_charge()  {
     enabled=$1
     if [ -n "$enabled" ]; then
         if [ "$enabled" == "true" ]; then
-           printf '1\n' > $LG_USB_CHARGE; 2> /dev/null
+           printf '1\n' > $LG_USB_CHARGE
         else
-           printf '0\n' > $LG_USB_CHARGE; 2> /dev/null
+           printf '0\n' > $LG_USB_CHARGE
         fi
     fi
 }

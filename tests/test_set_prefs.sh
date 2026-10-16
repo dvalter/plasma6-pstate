@@ -59,6 +59,14 @@ for cpu in 0 1 2 3; do
 done
 echo "ok   - governor applied to all cpus"
 
+chmod a-w "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
+if "$SCRIPT" -cpu-max-perf 50 2> /dev/null; then
+    echo "FAIL - failed write exits with 0"
+    failures=$((failures + 1))
+else
+    echo "ok   - failed write exits with an error"
+fi
+
 if [ $failures -ne 0 ]; then
     echo "$failures failure(s)"
     exit 1
