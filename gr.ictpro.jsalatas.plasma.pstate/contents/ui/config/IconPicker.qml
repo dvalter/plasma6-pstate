@@ -49,7 +49,7 @@ QQC2.Button {
     function setDefaultIcon() {
         iconPreview.source = defaultIcon
         iconPicked(defaultIcon)
-        iconCleared
+        iconCleared()
     }
 
     QQC2.Menu {
