@@ -209,46 +209,15 @@ PlasmoidItem {
         }
     }
 
+    // A row with the icon and the sensor values of every section that has some
     function tooltipText() {
-        var toolTipSubText ='';
-        var txt = '';
-
-        toolTipSubText += '<font size="4"><table>'
-
-        toolTipSubText += '<tr>'
-        toolTipSubText += '<td style="text-align: right;">'
-        toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">d</font></span>'
-        toolTipSubText += '</td>'
-        toolTipSubText += '<td style="text-align: left;">'
-        toolTipSubText += '<span>&nbsp;&nbsp;'+(valuesText(['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq']) || 'N/A')+'</span>'
-        toolTipSubText += '</td>'
-        toolTipSubText += '</tr>'
-
-        txt = valuesText(['battery_percentage', 'battery_remaining_time']);
-        if(txt) {
-            toolTipSubText += '<tr>'
-            toolTipSubText += '<td style="text-align: center;">'
-            toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">h</font></span>'
-            toolTipSubText += '</td>'
-            toolTipSubText += '<td style="text-align: left;">'
-            toolTipSubText += '<span>&nbsp;&nbsp;'+ txt +'</span>'
-            toolTipSubText += '</td>'
-            toolTipSubText += '</tr>'
-        }
-
-        txt = valuesText(['package_temp', 'fan_speeds']);
-        if (txt) {
-            toolTipSubText += '<tr>'
-            toolTipSubText += '<td style="text-align: center;">'
-            toolTipSubText += '<span style="font-family: Plasma pstate Manager;"><font size="5">b</font></span>'
-            toolTipSubText += '</td>'
-            toolTipSubText += '<td style="text-align: left;">'
-            toolTipSubText += '<span>&nbsp;&nbsp;'+ txt +'</span>'
-            toolTipSubText += '</td>'
-            toolTipSubText += '</tr>'
-        }
-        toolTipSubText += '</table></font>'
-
-        return toolTipSubText
+        var rows = Utils.get_model()
+            .filter(section => section.sensors && valuesText(section.sensors))
+            .map(section => '<tr>'
+                 + '<td style="text-align: center;"><span style="font-family: ' + symbolsFont.name + ';">'
+                 + '<font size="5">' + section.icon + '</font></span></td>'
+                 + '<td style="text-align: left;"><span>&nbsp;&nbsp;' + valuesText(section.sensors) + '</span></td>'
+                 + '</tr>')
+        return '<font size="4"><table>' + rows.join('') + '</table></font>'
     }
 }
