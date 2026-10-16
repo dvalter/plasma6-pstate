@@ -32,8 +32,8 @@ Item {
     property string sensor
     property string sensorValue
 
-    readonly property bool active: main.values[sensor] == sensorValue
-    readonly property bool updating: active && sensor in main.pending
+    readonly property bool active: backend.values[sensor] == sensorValue
+    readonly property bool updating: active && sensor in backend.pending
 
     property color borderColor: updating ? '#ff0000' : (active ? Qt.rgba(Kirigami.Theme.highlightColor.r, Kirigami.Theme.highlightColor.g, Kirigami.Theme.highlightColor.b, 0.6) :
                                          Qt.rgba(Kirigami.Theme.textColor.r,      Kirigami.Theme.textColor.g,      Kirigami.Theme.textColor.b,      0.4))
@@ -49,7 +49,7 @@ Item {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: main.changeSetting(sensor, sensorValue)
+            onClicked: backend.changeSetting(sensor, sensorValue)
         }
 
         PlasmaComponents.Label {

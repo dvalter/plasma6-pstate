@@ -39,7 +39,7 @@ RowLayout {
     }
 
     PlasmaComponents.CheckBox {
-        checked: main.values[sensor] == 'true'
-        onToggled: main.changeSetting(sensor, checked)
+        checked: backend.values[sensor] == 'true'
+        onToggled: backend.changeSetting(sensor, checked)
     }
 }

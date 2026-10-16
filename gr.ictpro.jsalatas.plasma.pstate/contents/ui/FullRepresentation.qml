@@ -31,7 +31,7 @@ ColumnLayout {
     Layout.maximumHeight: implicitHeight
 
     function isPresent(section) {
-        return !section.requires || section.requires.some(name => main.values[name])
+        return !section.requires || section.requires.some(name => backend.values[name])
     }
 
     Repeater {

@@ -28,13 +28,13 @@ RowLayout {
     property var props
 
     readonly property string sensor: props.sensor
-    readonly property bool updating: sensor in main.pending
+    readonly property bool updating: sensor in backend.pending
 
     spacing: 10
 
     // A limit is either a number or the name of the sensor that holds it
     function limit(value, fallback) {
-        return typeof value === 'string' ? (parseInt(main.values[value], 10) || fallback) : value
+        return typeof value === 'string' ? (parseInt(backend.values[value], 10) || fallback) : value
     }
 
     PlasmaComponents.Label {
@@ -58,12 +58,12 @@ RowLayout {
         // Only change the setting once the slider is released
         onPressedChanged: {
             if(!pressed) {
-                main.changeSetting(sensor, value)
+                backend.changeSetting(sensor, value)
             }
         }
         onMoved: {
             if(!pressed) {
-                main.changeSetting(sensor, value)
+                backend.changeSetting(sensor, value)
             }
         }
     }
@@ -71,7 +71,7 @@ RowLayout {
     Binding {
         target: slider
         property: 'value'
-        value: parseInt(main.values[sensor], 10) || slider.from
+        value: parseInt(backend.values[sensor], 10) || slider.from
         when: !slider.pressed
         restoreMode: Binding.RestoreNone
     }

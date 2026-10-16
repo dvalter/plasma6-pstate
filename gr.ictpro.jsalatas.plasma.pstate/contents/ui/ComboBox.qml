@@ -44,7 +44,7 @@ RowLayout {
         Layout.fillWidth: true
         model: props.items
         textRole: "text"
-        currentIndex: props.items.findIndex(item => item.sensor_value == main.values[sensor])
-        onActivated: index => main.changeSetting(sensor, props.items[index].sensor_value)
+        currentIndex: props.items.findIndex(item => item.sensor_value == backend.values[sensor])
+        onActivated: index => backend.changeSetting(sensor, props.items[index].sensor_value)
     }
 }

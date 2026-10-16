@@ -55,7 +55,7 @@ GridLayout {
 
         Layout.bottomMargin: 5
 
-        text: main.valuesText(props.sensors || [])
+        text: backend.valuesText(props.sensors || [])
         font.pointSize: Kirigami.Theme.smallFont.pointSize * 1.25
         color: Kirigami.Theme.textColor
         opacity: 0.8
