@@ -60,6 +60,7 @@ check "initial rapl long term"     intel_rapl_long 28
 check "rapl long term limit"       intel_rapl_long_max 45
 check "initial rapl short term"    intel_rapl_short 64
 check "default rapl short limit"   intel_rapl_short_max 200
+check "no frequency list, no frequencies" cpufreq_scaling_min_freq '<missing>'
 check "initial tcc offset"         intel_tcc_cur_state 0
 check "tcc offset limit"           intel_tcc_max_state 63
 check "nvidia runtime status"      nvidia_runtime_status suspended
@@ -188,6 +189,16 @@ check "amd: boost on"                   cpu_turbo true
 check "amd: available governors"        cpu_available_governors "conservative ondemand userspace powersave performance schedutil"
 "$SCRIPT" -cpu-governor ondemand
 check "amd: set ondemand governor"      cpu_governor ondemand
+check "amd: available frequencies"      cpu_available_frequencies "3600000 2800000 2200000"
+check "amd: min frequency"              cpufreq_scaling_min_freq 2200000
+"$SCRIPT" -cpufreq-scaling-max-freq 2800000
+check "amd: set max frequency"          cpufreq_scaling_max_freq 2800000
+for cpu in 0 1 2 3; do
+    [ "$(cat "$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpu$cpu/cpufreq/scaling_max_freq")" == 2800000 ] || \
+        { echo "FAIL - max frequency not applied to cpu$cpu"; failures=$((failures + 1)); }
+done
+reject -cpufreq-scaling-min-freq 3000000
+reject -cpufreq-scaling-min-freq "2200000 1"
 "$SCRIPT" -cpu-turbo false
 check "amd: disable boost"              cpu_turbo false
 [ "$(cat "$boost")" == 0 ] || { echo "FAIL - boost not written"; failures=$((failures + 1)); }

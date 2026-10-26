@@ -115,6 +115,13 @@ write_bool() {
     fi
 }
 
+# read_list <file>: prints the words in file, separated by single spaces
+read_list() {
+    if [ -f "$1" ]; then
+        echo $(cat "$1")
+    fi
+}
+
 # read_bool <file> <value for false>: prints true unless the file holds the
 # value for false
 read_bool() {
@@ -207,8 +214,16 @@ read_all() {
     field gpu_boost_freq "$(cat "$GPU/gt_boost_freq_mhz" 2> /dev/null)"
     field gpu_cur_freq "$(cat "$GPU/gt_cur_freq_mhz" 2> /dev/null)"
     field cpu_governor "$(cat "$CPU/cpu0/cpufreq/scaling_governor" 2> /dev/null)"
-    field cpu_available_governors "$(cat "$CPU/cpu0/cpufreq/scaling_available_governors" 2> /dev/null)"
+    field cpu_available_governors "$(read_list "$CPU/cpu0/cpufreq/scaling_available_governors")"
     field energy_perf "$(read_energy_perf)"
+
+    # Only offered by drivers listing the frequencies they support
+    local frequencies=$CPU/cpu0/cpufreq/scaling_available_frequencies
+    if [ -f "$frequencies" ]; then
+        field cpu_available_frequencies "$(read_list "$frequencies")"
+        field cpufreq_scaling_min_freq "$(cat "$CPU/cpu0/cpufreq/scaling_min_freq" 2> /dev/null)"
+        field cpufreq_scaling_max_freq "$(cat "$CPU/cpu0/cpufreq/scaling_max_freq" 2> /dev/null)"
+    fi
 
     if has_dell_thermal; then
         field thermal_mode "$(read_thermal_mode)"
@@ -256,7 +271,9 @@ usage() {
     echo "                  -powermizer |"
     echo "                  -intel-tcc-cur-state |"
     echo "                  -intel-rapl-long |"
-    echo "                  -intel-rapl-short ] value"
+    echo "                  -intel-rapl-short |"
+    echo "                  -cpufreq-scaling-min-freq |"
+    echo "                  -cpufreq-scaling-max-freq ] value"
     echo "2: set_prefs.sh -read-all"
     echo "3: set_prefs.sh -read-powermizer"
     exit 3
@@ -272,6 +289,8 @@ THERMAL_MODE='performance|balanced|cool-bottom|quiet'
 POWERMIZER='[0-2]'
 TCC='[0-9]{1,3}'
 WATTS='[1-9][0-9]{0,3}'
+KHZ='[0-9]{1,9}'
+FREQUENCIES=$CPU/cpu0/cpufreq/scaling_available_frequencies
 
 # accept <regex>: exits unless the value matches regex
 accept() {
@@ -318,6 +337,8 @@ case $option in
     -intel-tcc-cur-state)     accept "$TCC";          accept_at_most "$(cat "$INTEL_TCC/max_state" 2> /dev/null)"; write "$value" "$INTEL_TCC/cur_state" ;;
     -intel-rapl-long)         accept "$WATTS";        accept_at_most "$RAPL_LONG_MAX"; set_rapl "$value" "$RAPL_LONG" ;;
     -intel-rapl-short)        accept "$WATTS";        accept_at_most "$RAPL_SHORT_MAX"; set_rapl "$value" "$RAPL_SHORT" ;;
+    -cpufreq-scaling-min-freq) accept "$KHZ";        accept_listed "$FREQUENCIES"; write "$value" "$CPU"/cpu*/cpufreq/scaling_min_freq ;;
+    -cpufreq-scaling-max-freq) accept "$KHZ";        accept_listed "$FREQUENCIES"; write "$value" "$CPU"/cpu*/cpufreq/scaling_max_freq ;;
     -read-all)                read_all ;;
     -read-powermizer)         read_powermizer ;;
     *)                        usage ;;

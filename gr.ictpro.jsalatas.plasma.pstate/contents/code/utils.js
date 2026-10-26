@@ -32,6 +32,10 @@ function to_string(value) {
     return value || '';
 }
 
+function khz_to_mhz(value, unit) {
+    return to_int(parseFloat(value) / 1000, unit);
+}
+
 // The TCC offset lowers the temperature
 function to_tcc_offset(value, unit) {
     var text = to_int(value, unit);
@@ -64,6 +68,8 @@ var sensors = {
     'gpu_max_freq': {'unit': ' MHz'},
     'gpu_boost_freq': {'unit': ' MHz'},
     'nvidia_runtime_status': {'format': to_string},
+    'cpufreq_scaling_min_freq': {'unit': ' MHz', 'format': khz_to_mhz},
+    'cpufreq_scaling_max_freq': {'unit': ' MHz', 'format': khz_to_mhz},
     'intel_rapl_long': {'unit': ' W'},
     'intel_rapl_short': {'unit': ' W'},
     'intel_tcc_cur_state': {'unit': ' °C', 'format': to_tcc_offset},
@@ -90,6 +96,10 @@ var model =  [
             {'type': 'group', 'text': 'CPU Frequencies', 'items' :[
                 {'type': 'slider', 'text': 'Min perf', 'min': 0, 'max': 100, 'sensor': 'cpu_min_perf'},
                 {'type': 'slider', 'text': 'Max perf', 'min': 0, 'max': 100, 'sensor': 'cpu_max_perf'},
+                {'type': 'combobox', 'text': 'Min freq', 'sensor': 'cpufreq_scaling_min_freq',
+                 'available': 'cpu_available_frequencies'},
+                {'type': 'combobox', 'text': 'Max freq', 'sensor': 'cpufreq_scaling_max_freq',
+                 'available': 'cpu_available_frequencies'},
                 {'type': 'switch', 'text': 'Turbo', 'sensor': 'cpu_turbo'}
             ]},
             {'type': 'group', 'text': 'GPU Frequencies', 'visible': 'showIntelGPU', 'items' :[
@@ -179,13 +189,20 @@ function find_sensor_ids(tree, idRole, pattern, parent) {
 }
 
 // The options of a radio or combobox. With 'available', only those listed in
-// that setting, separated by spaces, once it has been read.
+// that setting, separated by spaces, once it has been read. Without items,
+// the options are the available values.
 function available_items(item, values) {
     var available = item.available && values[item.available];
+    available = available ? available.trim().split(/\s+/) : undefined;
+    if(!item.items) {
+        return (available || []).map(value => ({
+            'text': format_value(item.sensor, value),
+            'sensor_value': value
+        }));
+    }
     if(!available) {
         return item.items;
     }
-    available = available.split(/\s+/);
     return item.items.filter(option => available.includes(option.sensor_value));
 }
 

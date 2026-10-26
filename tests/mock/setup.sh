@@ -76,11 +76,14 @@ put "$n/device/power/runtime_status" suspended
 put "$ROOT/nvidia_powermizer" 2
 
 if [ "$CPU_VENDOR" == amd ]; then
-    rm -r "$SYS/devices/system/cpu/intel_pstate" "$SYS/class/drm/card0"
+    rm -r "$SYS/devices/system/cpu/intel_pstate" "$SYS/class/drm/card0" "$SYS/class/thermal/cooling_device1"
     mkdir -p "$SYS/devices/system/cpu/cpufreq"
     put "$SYS/devices/system/cpu/cpufreq/boost" 1
     for d in "$SYS"/devices/system/cpu/cpu?/cpufreq; do
         put "$d/scaling_governor" schedutil
         put "$d/scaling_available_governors" "conservative ondemand userspace powersave performance schedutil"
+        put "$d/scaling_available_frequencies" "3600000 2800000 2200000 "
+        put "$d/scaling_min_freq" 2200000
+        put "$d/scaling_max_freq" 3600000
     done
 fi

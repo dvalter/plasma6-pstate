@@ -68,6 +68,15 @@ TestCase {
         compare(Utils.available_items({'items': radio.items}, {'cpu_available_governors': 'powersave'}).length, 3)
     }
 
+    function test_available_items_from_values() {
+        var combobox = {'type': 'combobox', 'sensor': 'cpufreq_scaling_min_freq',
+                        'available': 'cpu_available_frequencies'}
+        compare(Utils.available_items(combobox, {}), [])
+        compare(Utils.available_items(combobox, {'cpu_available_frequencies': '3600000 2200000 '}),
+                [{'text': '3600 MHz', 'sensor_value': '3600000'},
+                 {'text': '2200 MHz', 'sensor_value': '2200000'}])
+    }
+
     function test_has_value() {
         var values = {'cpu_min_perf': '20', 'cpu_governor': 'powersave'}
         verify(Utils.has_value({'type': 'slider', 'sensor': 'cpu_min_perf'}, values))
