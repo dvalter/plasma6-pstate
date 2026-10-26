@@ -39,6 +39,9 @@ elif [ -f "$CPU/cpufreq/policy0/cpb" ]; then
     TURBO_OFF=0
 fi
 LG_LAPTOP=$SYSFS/devices/platform/lg-laptop
+# Intel's Thermal Control Circuit offset, lowering the throttling temperature
+INTEL_TCC=$(grep -H "TCC Offset" "$SYSFS"/class/thermal/*/type 2> /dev/null | \
+            head -n1 | sed 's/\/type:.*//')
 
 # write <value> <file>...: only writes to existing files
 write() {
@@ -168,6 +171,9 @@ read_all() {
         field thermal_mode "$(read_thermal_mode)"
     fi
 
+    field intel_tcc_cur_state "$(cat "$INTEL_TCC/cur_state" 2> /dev/null)"
+    field intel_tcc_max_state "$(cat "$INTEL_TCC/max_state" 2> /dev/null)"
+
     # Whether the Nvidia GPU is active or suspended, read without waking it up
     field nvidia_runtime_status "$(cat "$NVIDIA_GPU/device/power/runtime_status" 2> /dev/null)"
 
@@ -199,7 +205,8 @@ usage() {
     echo "                  -lg-battery-charge-limit |"
     echo "                  -lg-fan-mode |"
     echo "                  -lg-usb-charge |"
-    echo "                  -powermizer ] value"
+    echo "                  -powermizer |"
+    echo "                  -intel-tcc-cur-state ] value"
     echo "2: set_prefs.sh -read-all"
     echo "3: set_prefs.sh -read-powermizer"
     exit 3
@@ -213,11 +220,20 @@ GOVERNOR='[a-z_]+'
 ENERGY_PERF='default|performance|balance_performance|balance_power|power'
 THERMAL_MODE='performance|balanced|cool-bottom|quiet'
 POWERMIZER='[0-2]'
+TCC='[0-9]{1,3}'
 
 # accept <regex>: exits unless the value matches regex
 accept() {
     if ! [[ $value =~ ^($1)$ ]]; then
         echo "set_prefs.sh: invalid value for $option: '$value'" >&2
+        exit 2
+    fi
+}
+
+# accept_at_most <file>: exits unless the value is at most the number in file
+accept_at_most() {
+    if [ -f "$1" ] && [ "$value" -gt "$(cat "$1")" ]; then
+        echo "set_prefs.sh: $value is too large for $option" >&2
         exit 2
     fi
 }
@@ -248,6 +264,7 @@ case $option in
     -lg-fan-mode)             accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/fan_mode" 0 1 ;;
     -lg-usb-charge)           accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/usb_charge" 1 0 ;;
     -powermizer)              accept "$POWERMIZER";   nvidia-settings -a "[gpu:0]/GpuPowerMizerMode=$value" 2> /dev/null ;;
+    -intel-tcc-cur-state)     accept "$TCC";          accept_at_most "$INTEL_TCC/max_state"; write "$value" "$INTEL_TCC/cur_state" ;;
     -read-all)                read_all ;;
     -read-powermizer)         read_powermizer ;;
     *)                        usage ;;

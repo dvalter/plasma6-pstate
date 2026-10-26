@@ -32,6 +32,12 @@ function to_string(value) {
     return value || '';
 }
 
+// The TCC offset lowers the temperature
+function to_tcc_offset(value, unit) {
+    var text = to_int(value, unit);
+    return text && Math.round(parseFloat(value)) != 0 ? '-' + text : text;
+}
+
 function to_time(value) {
     var val = Math.round(parseFloat(value));
     if(!(val > 0)) {
@@ -58,6 +64,7 @@ var sensors = {
     'gpu_max_freq': {'unit': ' MHz'},
     'gpu_boost_freq': {'unit': ' MHz'},
     'nvidia_runtime_status': {'format': to_string},
+    'intel_tcc_cur_state': {'unit': ' °C', 'format': to_tcc_offset},
 }
 
 function format_value(name, value) {
@@ -113,11 +120,15 @@ var model =  [
     {'type': 'header', 'text': 'Thermal Management', 'icon': 'b',
         'sensors': ['package_temp', 'fan_speeds'],
         'items': [
-            {'type': 'radio', 'text': '', 'sensor': 'thermal_mode', 'items' :[
+            {'type': 'radio', 'text': 'Thermal Mode', 'sensor': 'thermal_mode', 'items' :[
                  {'symbol': 'e', 'text': 'Performance', 'sensor_value': 'performance'},
                  {'symbol': 'j', 'text': 'Balanced', 'sensor_value': 'balanced'},
                  {'symbol': 'g', 'text': 'Cool Bottom', 'sensor_value': 'cool-bottom'},
                 {'symbol': 'c', 'text': 'Quiet', 'sensor_value': 'quiet'}
+            ]},
+            {'type': 'group', 'text': 'Thermal Control Circuit', 'items' :[
+                {'type': 'slider', 'text': 'Offset', 'min': 0, 'max': 'intel_tcc_max_state',
+                 'sensor': 'intel_tcc_cur_state'}
             ]}
         ]
     }, 

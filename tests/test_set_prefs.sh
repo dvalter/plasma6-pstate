@@ -56,6 +56,8 @@ check_powermizer() {
     fi
 }
 check_powermizer "read powermizer" '{"powermizer":"2"}'
+check "initial tcc offset"         intel_tcc_cur_state 0
+check "tcc offset limit"           intel_tcc_max_state 63
 check "nvidia runtime status"      nvidia_runtime_status suspended
 
 "$SCRIPT" -cpu-min-perf 35;              check "set cpu min perf"      cpu_min_perf 35
@@ -71,6 +73,7 @@ check "nvidia runtime status"      nvidia_runtime_status suspended
 "$SCRIPT" -lg-battery-charge-limit true; check "set lg battery limit"  lg_battery_charge_limit true
 "$SCRIPT" -lg-usb-charge false;          check "set lg usb charge"     lg_usb_charge false
 "$SCRIPT" -lg-fan-mode false;            check "set lg fan mode"       lg_fan_mode false
+"$SCRIPT" -intel-tcc-cur-state 10;      check "set tcc offset"        intel_tcc_cur_state 10
 "$SCRIPT" -powermizer 1;                 check_powermizer "set nvidia powermizer" '{"powermizer":"1"}'
 
 for cpu in 0 1 2 3; do
@@ -109,6 +112,8 @@ reject -energy-perf balance
 reject -thermal-mode "--help"
 reject -lg-fan-mode 1
 reject -powermizer 3
+reject -intel-tcc-cur-state 64
+reject -intel-tcc-cur-state -1
 reject -powermizer "1 --assign=Foo=1"
 
 # The Intel GPU is found whichever card it is

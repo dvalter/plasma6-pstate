@@ -1,6 +1,8 @@
 #!/bin/bash
 # Mock Dell smbios-thermal-ctl, state kept next to the fake sysfs tree
 STATE=$PLASMA_PSTATE_SYSFS/../dell_thermal_mode
+# Without the state file, this isn't a Dell
+[ -f "$STATE" ] || exit 1
 case $1 in
     -g)
         echo "Print current status of thermal modes"

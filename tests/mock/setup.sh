@@ -45,6 +45,15 @@ put "$l/fan_mode" 0
 put "$l/battery_care_limit" 100
 put "$l/usb_charge" 1
 
+for i in 0 1; do
+    mkdir -p "$SYS/class/thermal/cooling_device$i"
+done
+put "$SYS/class/thermal/cooling_device0/type" Processor
+t=$SYS/class/thermal/cooling_device1
+put "$t/type" "TCC Offset"
+put "$t/cur_state" 0
+put "$t/max_state" 63
+
 put "$ROOT/dell_thermal_mode" Balanced
 n=$SYS/class/drm/card1
 mkdir -p "$n/device"
