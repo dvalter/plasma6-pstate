@@ -13,10 +13,27 @@ Thank you @frankenfruity for taking over! :)
 This version requires Plasma 6. Install it with `sudo ./install.sh`; it installs the widget system-wide
 (`kpackagetool6 -g`) and adds the sudoers rule for `set_prefs.sh`.
 
+It shows the settings your hardware has:
+
+* intel_pstate's minimum and maximum performance, and turbo, which also works through the generic cpufreq
+  boost and AMD's cpb
+* the minimum and maximum frequency, for cpufreq drivers that list the frequencies they support
+* the CPU governor, out of those the driver offers
+* the Intel GPU's frequencies
+* the energy performance preference
+* Intel's Running Average Power Limits and Thermal Control Circuit offset
+* Dell's thermal modes, the LG laptop driver's battery limit, USB charging and fan mode
+* Nvidia's PowerMizer mode, and whether the Nvidia GPU is active or suspended
+
+## Credits
+
+Several of these, and the fixes to finding the Intel GPU and to keeping the Nvidia GPU idle, come from
+[frankenfruity's fork](https://github.com/frankenfruity/plasma-pstate); the commits say which.
+
 ## Testing without an Intel CPU
 
-`tests/` contains mocks that emulate an Intel laptop (with the Dell, LG and Nvidia extras), so the widget
-can be developed and tested on any machine:
+`tests/` contains mocks that emulate an Intel laptop (with the Dell, LG and Nvidia extras), or a CPU without
+intel_pstate (`MOCK_CPU=amd`), so the widget can be developed and tested on any machine:
 
 * `tests/run-tests.sh` runs all tests: `test_set_prefs.sh` checks `set_prefs.sh`, `tst_backend.qml` checks
   reading and changing settings through the widget's backend, and `tst_utils.qml` has unit tests for the
