@@ -67,8 +67,8 @@ function sensors_text(names, values) {
                 .join(' | ');
 }
 
-// The sections of the popup. Sections listing required settings are only
-// shown when at least one of them has a value, i.e. the hardware is present.
+// The sections of the popup. Controls are only shown for the settings the
+// hardware has, and sections and groups only when they have controls.
 var model =  [
     {'type': 'header', 'text': 'Processor Settings', 'icon': 'd',
         'sensors': ['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'],
@@ -102,7 +102,6 @@ var model =  [
         ]
     },
     {'type': 'header', 'text': 'Thermal Management', 'icon': 'b',
-        'requires': ['thermal_mode'],
         'sensors': ['package_temp', 'fan_speeds'],
         'items': [
             {'type': 'radio', 'text': '', 'sensor': 'thermal_mode', 'items' :[
@@ -114,20 +113,17 @@ var model =  [
         ]
     }, 
     {'type': 'header', 'text': 'Power Supply Management', 'icon': 'm',
-        'requires': ['lg_battery_charge_limit', 'lg_usb_charge'],
         'items': [
             {'type': 'switch', 'text': 'Battery Limit', 'sensor': 'lg_battery_charge_limit'},
             {'type': 'switch', 'text': 'USB Charge', 'sensor': 'lg_usb_charge'}
         ]
     },
     {'type': 'header', 'text': 'Fan Control', 'icon': 'n',
-        'requires': ['lg_fan_mode'],
         'items': [
             {'type': 'switch', 'text': 'Silent Mode', 'sensor': 'lg_fan_mode'}
         ]
     },
     {'type': 'header', 'text': 'Nvidia Settings', 'icon': 'o',
-        'requires': ['powermizer'],
         'items': [
             {'type': 'combobox', 'text': 'PowerMizer', 'sensor': 'powermizer', 'items' :[
                  {'text': 'Adaptive', 'sensor_value': '0'},
@@ -151,6 +147,14 @@ function find_sensor_ids(tree, idRole, pattern, parent) {
         res = res.concat(find_sensor_ids(tree, idRole, pattern, index));
     }
     return res;
+}
+
+// Whether a control, or any control in a group or section, has a value
+function has_value(item, values) {
+    if(item.items && item.type != 'radio' && item.type != 'combobox') {
+        return item.items.some(child => has_value(child, values));
+    }
+    return values[item.sensor] !== undefined;
 }
 
 function get_model() {

@@ -21,6 +21,8 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 
+import '../code/utils.js' as Utils
+
 // Shows the control described by props, according to its type
 Loader {
     property var props
@@ -37,8 +39,10 @@ Loader {
     Layout.bottomMargin: props.type == 'group' || props.type == 'radio' ? 10 : 5
     Layout.fillWidth: props.type == 'group' || props.type == 'slider'
 
-    // Controls can depend on a configuration option
-    visible: props.visible === undefined || Plasmoid.configuration[props.visible]
+    // Controls are hidden when the hardware lacks their settings, and can
+    // depend on a configuration option
+    visible: Utils.has_value(props, backend.values)
+             && (props.visible === undefined || Plasmoid.configuration[props.visible])
 
     Component.onCompleted: {
         if(props.type in sources) {

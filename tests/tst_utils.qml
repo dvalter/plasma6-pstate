@@ -52,4 +52,18 @@ TestCase {
         compare(Utils.sensors_text(['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'], values), '13% | 450 MHz')
         compare(Utils.sensors_text(['cpu_cur_freq'], values), '')
     }
+
+    function test_has_value() {
+        var values = {'cpu_min_perf': '20', 'cpu_governor': 'powersave'}
+        verify(Utils.has_value({'type': 'slider', 'sensor': 'cpu_min_perf'}, values))
+        verify(!Utils.has_value({'type': 'slider', 'sensor': 'gpu_min_freq'}, values))
+        verify(Utils.has_value({'type': 'radio', 'sensor': 'cpu_governor', 'items': [{'sensor_value': 'performance'}]}, values))
+        verify(!Utils.has_value({'type': 'combobox', 'sensor': 'powermizer', 'items': [{'sensor_value': '0'}]}, values))
+        verify(Utils.has_value({'type': 'header', 'items': [
+            {'type': 'group', 'items': [{'type': 'slider', 'sensor': 'gpu_min_freq'}]},
+            {'type': 'group', 'items': [{'type': 'slider', 'sensor': 'cpu_min_perf'}]}]}, values))
+        verify(!Utils.has_value({'type': 'header', 'items': [
+            {'type': 'group', 'items': [{'type': 'slider', 'sensor': 'gpu_min_freq'}]},
+            {'type': 'switch', 'sensor': 'lg_fan_mode'}]}, values))
+    }
 }

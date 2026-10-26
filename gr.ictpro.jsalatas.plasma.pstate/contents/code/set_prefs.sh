@@ -106,14 +106,18 @@ read_powermizer() {
 read_all() {
     local fields=()
 
-    # field <name> <value>
+    # field <name> <value>: adds a setting, unless the hardware lacks it
     field() {
-        fields+=("\"$1\":\"$2\"")
+        if [ -n "$2" ]; then
+            fields+=("\"$1\":\"$2\"")
+        fi
     }
 
     field cpu_min_perf "$(cat "$INTEL_PSTATE/min_perf_pct" 2> /dev/null)"
     field cpu_max_perf "$(cat "$INTEL_PSTATE/max_perf_pct" 2> /dev/null)"
-    field cpu_turbo "$(read_bool "$INTEL_PSTATE/no_turbo" 1)"
+    if [ -f "$INTEL_PSTATE/no_turbo" ]; then
+        field cpu_turbo "$(read_bool "$INTEL_PSTATE/no_turbo" 1)"
+    fi
     field gpu_min_freq "$(cat "$GPU/gt_min_freq_mhz" 2> /dev/null)"
     field gpu_max_freq "$(cat "$GPU/gt_max_freq_mhz" 2> /dev/null)"
     field gpu_min_limit "$(cat "$GPU/gt_RP1_freq_mhz" 2> /dev/null)"

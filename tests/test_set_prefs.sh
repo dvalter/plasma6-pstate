@@ -90,6 +90,15 @@ reject -lg-fan-mode 1
 reject -powermizer 3
 reject -powermizer "1 --assign=Foo=1"
 
+# Settings of hardware that isn't there are left out
+rm -r "$PLASMA_PSTATE_SYSFS/class/drm/card0" "$PLASMA_PSTATE_SYSFS/devices/platform/lg-laptop"
+check "missing GPU is left out"        gpu_min_freq '<missing>'
+check "missing LG laptop is left out"  lg_fan_mode '<missing>'
+mv "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate" "$WORK/intel_pstate"
+check "missing intel_pstate is left out" cpu_min_perf '<missing>'
+check "missing turbo is left out"      cpu_turbo '<missing>'
+mv "$WORK/intel_pstate" "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate"
+
 chmod a-w "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
 if "$SCRIPT" -cpu-max-perf 50 2> /dev/null; then
     echo "FAIL - failed write exits with 0"

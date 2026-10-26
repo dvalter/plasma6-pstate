@@ -30,10 +30,6 @@ ColumnLayout {
     Layout.maximumWidth: implicitWidth
     Layout.maximumHeight: implicitHeight
 
-    function isPresent(section) {
-        return !section.requires || section.requires.some(name => backend.values[name])
-    }
-
     Repeater {
         model: Utils.get_model()
 
@@ -41,7 +37,7 @@ ColumnLayout {
             required property var modelData
 
             props: modelData
-            visible: isPresent(modelData)
+            visible: Utils.has_value(modelData, backend.values)
 
             Layout.topMargin: 5
             Layout.bottomMargin: 10
