@@ -1,6 +1,8 @@
 #!/bin/bash
 # Mock nvidia-settings, state kept next to the fake sysfs tree
 STATE=$PLASMA_PSTATE_SYSFS/../nvidia_powermizer
+# Every call wakes up the GPU, so record them
+echo "$*" >> "$PLASMA_PSTATE_SYSFS/../nvidia-settings.log"
 case $1 in
     -q)
         echo "  Attribute 'GPUPowerMizerMode' (host:0[gpu:0]): $(cat "$STATE")."

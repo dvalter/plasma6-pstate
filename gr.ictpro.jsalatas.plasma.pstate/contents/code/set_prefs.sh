@@ -21,6 +21,7 @@ drm_card() {
 CPU=$SYSFS/devices/system/cpu
 INTEL_PSTATE=$CPU/intel_pstate
 GPU=$(drm_card 0x8086)
+NVIDIA_GPU=$(drm_card 0x10de)
 
 # Turbo is switched with the generic cpufreq boost, intel_pstate's no_turbo or
 # AMD's cpb
@@ -86,9 +87,6 @@ has_lg_laptop() {
     [ -d "$LG_LAPTOP" ]
 }
 
-has_nvidia() {
-    nvidia-settings -q GpuPowerMizerMode > /dev/null 2>&1
-}
 
 set_energy_perf() {
     if [ -f "$CPU/cpu0/cpufreq/energy_performance_preference" ]; then
@@ -125,9 +123,20 @@ read_thermal_mode() {
         awk '{$1=$1;print}' | sed "s/\t//g; s/ /-/g" | tr "[A-Z]" "[a-z]"
 }
 
+# Asking nvidia-settings wakes up the GPU, so this isn't part of read_all. It
+# doesn't need root.
 read_powermizer() {
-    nvidia-settings -q GpuPowerMizerMode | grep "Attribute 'GPUPowerMizerMode'" | \
-        awk -F "): " '{print $2}' | awk -F "." '{print $1}'
+    local powermizer
+    if [ -n "$NVIDIA_GPU" ]; then
+        powermizer=$(nvidia-settings -q GpuPowerMizerMode 2> /dev/null | \
+            grep "Attribute 'GPUPowerMizerMode'" | \
+            awk -F "): " '{print $2}' | awk -F "." '{print $1}')
+    fi
+    if [ -n "$powermizer" ]; then
+        echo "{\"powermizer\":\"$powermizer\"}"
+    else
+        echo "{}"
+    fi
 }
 
 read_all() {
@@ -168,10 +177,6 @@ read_all() {
         field lg_fan_mode "$(read_bool "$LG_LAPTOP/fan_mode" 1)"
     fi
 
-    if has_nvidia; then
-        field powermizer "$(read_powermizer)"
-    fi
-
     local IFS=,
     echo "{${fields[*]}}"
 }
@@ -192,6 +197,7 @@ usage() {
     echo "                  -lg-usb-charge |"
     echo "                  -powermizer ] value"
     echo "2: set_prefs.sh -read-all"
+    echo "3: set_prefs.sh -read-powermizer"
     exit 3
 }
 
@@ -230,5 +236,6 @@ case $option in
     -lg-usb-charge)           accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/usb_charge" 1 0 ;;
     -powermizer)              accept "$POWERMIZER";   nvidia-settings -a "[gpu:0]/GpuPowerMizerMode=$value" 2> /dev/null ;;
     -read-all)                read_all ;;
+    -read-powermizer)         read_powermizer ;;
     *)                        usage ;;
 esac

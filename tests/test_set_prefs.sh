@@ -36,7 +36,26 @@ check "initial dell thermal mode"  thermal_mode balanced
 check "initial lg battery limit"   lg_battery_charge_limit false
 check "initial lg usb charge"      lg_usb_charge true
 check "initial lg fan mode"        lg_fan_mode true
-check "initial nvidia powermizer"  powermizer 2
+nvidia_log=$PLASMA_PSTATE_SYSFS/../nvidia-settings.log
+rm -f "$nvidia_log"
+check "powermizer isn't polled"    powermizer '<missing>'
+if [ -e "$nvidia_log" ]; then
+    echo "FAIL - -read-all ran nvidia-settings"
+    failures=$((failures + 1))
+else
+    echo "ok   - -read-all doesn't run nvidia-settings"
+fi
+check_powermizer() {
+    local actual
+    actual=$("$SCRIPT" -read-powermizer)
+    if [ "$actual" == "$2" ]; then
+        echo "ok   - $1"
+    else
+        echo "FAIL - $1: -read-powermizer printed '$actual', expected '$2'"
+        failures=$((failures + 1))
+    fi
+}
+check_powermizer "read powermizer" '{"powermizer":"2"}'
 
 "$SCRIPT" -cpu-min-perf 35;              check "set cpu min perf"      cpu_min_perf 35
 "$SCRIPT" -cpu-max-perf 80;              check "set cpu max perf"      cpu_max_perf 80
@@ -51,7 +70,7 @@ check "initial nvidia powermizer"  powermizer 2
 "$SCRIPT" -lg-battery-charge-limit true; check "set lg battery limit"  lg_battery_charge_limit true
 "$SCRIPT" -lg-usb-charge false;          check "set lg usb charge"     lg_usb_charge false
 "$SCRIPT" -lg-fan-mode false;            check "set lg fan mode"       lg_fan_mode false
-"$SCRIPT" -powermizer 1;                 check "set nvidia powermizer" powermizer 1
+"$SCRIPT" -powermizer 1;                 check_powermizer "set nvidia powermizer" '{"powermizer":"1"}'
 
 for cpu in 0 1 2 3; do
     gov=$(cat "$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpu$cpu/cpufreq/scaling_governor")
@@ -92,15 +111,16 @@ reject -powermizer "1 --assign=Foo=1"
 
 # The Intel GPU is found whichever card it is
 drm=$PLASMA_PSTATE_SYSFS/class/drm
-mv "$drm/card0" "$drm/card1"
-mkdir -p "$drm/card0/device"
-printf '0x10de\n' > "$drm/card0/device/vendor"
-check "Intel GPU found as card1"       gpu_cur_freq 450
-"$SCRIPT" -gpu-max-freq 1000;          check "set gpu max freq on card1" gpu_max_freq 1000
-rm -r "$drm/card0"
-mv "$drm/card1" "$drm/card0"
+mv "$drm/card0" "$drm/card2"
+check "Intel GPU found as card2"       gpu_cur_freq 450
+"$SCRIPT" -gpu-max-freq 1000;          check "set gpu max freq on card2" gpu_max_freq 1000
+mv "$drm/card2" "$drm/card0"
 
 # Settings of hardware that isn't there are left out
+rm "$nvidia_log"
+rm -r "$drm/card1"
+check_powermizer "no Nvidia GPU, no powermizer" '{}'
+[ -e "$nvidia_log" ] && { echo "FAIL - nvidia-settings ran without an Nvidia GPU"; failures=$((failures + 1)); }
 rm -r "$PLASMA_PSTATE_SYSFS/class/drm/card0" "$PLASMA_PSTATE_SYSFS/devices/platform/lg-laptop"
 check "missing GPU is left out"        gpu_min_freq '<missing>'
 check "missing LG laptop is left out"  lg_fan_mode '<missing>'

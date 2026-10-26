@@ -79,7 +79,25 @@ Item {
         pending = newPending
         changes++
         read()
+        if(name == 'powermizer') {
+            readPowermizer()
+        }
     }
+
+    // Reading the Nvidia PowerMizer mode wakes up the GPU, so it isn't read
+    // with the other settings but only at the start and after changing it.
+    // It talks to the user's X server, so it runs without sudo.
+    function readPowermizer() {
+        runner.run(scriptPath + ' -read-powermizer', (exitCode, stdout, stderr) => {
+            if(exitCode > 0) {
+                console.warn('Reading the PowerMizer mode failed: ' + stderr)
+            } else {
+                setValues(JSON.parse(stdout))
+            }
+        })
+    }
+
+    Component.onCompleted: readPowermizer()
 
     // Counts the settings changes started and finished. A read that ran
     // while a setting was being changed may return its old value, so its

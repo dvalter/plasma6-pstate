@@ -17,6 +17,7 @@ TestCase {
     function init() {
         backend = createTemporaryObject(backendComponent, this)
         tryVerify(() => backend.values['cpu_governor'] !== undefined, 5000, 'settings are read')
+        tryVerify(() => backend.values['powermizer'] !== undefined, 5000, 'PowerMizer mode is read')
     }
 
     function test_read() {

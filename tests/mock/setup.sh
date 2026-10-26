@@ -45,6 +45,9 @@ put "$l/battery_care_limit" 100
 put "$l/usb_charge" 1
 
 put "$ROOT/dell_thermal_mode" Balanced
+n=$SYS/class/drm/card1
+mkdir -p "$n/device"
+put "$n/device/vendor" 0x10de
 put "$ROOT/nvidia_powermizer" 2
 
 if [ "$CPU_VENDOR" == amd ]; then
