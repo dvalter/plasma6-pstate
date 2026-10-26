@@ -44,6 +44,8 @@ TestCase {
         compare(Utils.format_value('battery_remaining_time', 1800), '0:30')
         compare(Utils.format_value('battery_remaining_time', 0), '')
         compare(Utils.format_value('battery_remaining_time', undefined), '')
+        compare(Utils.format_value('nvidia_runtime_status', 'suspended'), 'suspended')
+        compare(Utils.format_value('nvidia_runtime_status', undefined), '')
         compare(Utils.format_value('fan_speeds', {'a': '2100.4', 'b': undefined, 'c': '0'}), '2100 RPM | 0 RPM')
     }
 

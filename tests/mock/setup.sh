@@ -48,6 +48,8 @@ put "$ROOT/dell_thermal_mode" Balanced
 n=$SYS/class/drm/card1
 mkdir -p "$n/device"
 put "$n/device/vendor" 0x10de
+mkdir -p "$n/device/power"
+put "$n/device/power/runtime_status" suspended
 put "$ROOT/nvidia_powermizer" 2
 
 if [ "$CPU_VENDOR" == amd ]; then

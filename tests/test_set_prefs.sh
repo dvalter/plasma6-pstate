@@ -56,6 +56,7 @@ check_powermizer() {
     fi
 }
 check_powermizer "read powermizer" '{"powermizer":"2"}'
+check "nvidia runtime status"      nvidia_runtime_status suspended
 
 "$SCRIPT" -cpu-min-perf 35;              check "set cpu min perf"      cpu_min_perf 35
 "$SCRIPT" -cpu-max-perf 80;              check "set cpu max perf"      cpu_max_perf 80

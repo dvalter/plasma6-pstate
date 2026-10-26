@@ -28,6 +28,10 @@ function array_to_int(values, unit) {
                                     .join(' | ');
 }
 
+function to_string(value) {
+    return value || '';
+}
+
 function to_time(value) {
     var val = Math.round(parseFloat(value));
     if(!(val > 0)) {
@@ -53,6 +57,7 @@ var sensors = {
     'gpu_min_freq': {'unit': ' MHz'},
     'gpu_max_freq': {'unit': ' MHz'},
     'gpu_boost_freq': {'unit': ' MHz'},
+    'nvidia_runtime_status': {'format': to_string},
 }
 
 function format_value(name, value) {
@@ -124,6 +129,7 @@ var model =  [
         ]
     },
     {'type': 'header', 'text': 'Nvidia Settings', 'icon': 'o',
+        'sensors': ['nvidia_runtime_status'],
         'items': [
             {'type': 'combobox', 'text': 'PowerMizer', 'sensor': 'powermizer', 'items' :[
                  {'text': 'Adaptive', 'sensor_value': '0'},

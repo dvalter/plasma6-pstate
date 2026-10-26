@@ -167,6 +167,9 @@ read_all() {
         field thermal_mode "$(read_thermal_mode)"
     fi
 
+    # Whether the Nvidia GPU is active or suspended, read without waking it up
+    field nvidia_runtime_status "$(cat "$NVIDIA_GPU/device/power/runtime_status" 2> /dev/null)"
+
     if has_lg_laptop; then
         if [ "$(cat "$LG_LAPTOP/battery_care_limit")" == "80" ]; then
             field lg_battery_charge_limit true
