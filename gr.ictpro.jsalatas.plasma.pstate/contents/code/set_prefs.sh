@@ -16,11 +16,15 @@ INTEL_PSTATE=$CPU/intel_pstate
 GPU=$SYSFS/class/drm/card0
 LG_LAPTOP=$SYSFS/devices/platform/lg-laptop
 
-# write <value> <file>...
+# write <value> <file>...: only writes to existing files
 write() {
     local value=$1 file
     shift
     for file in "$@"; do
+        if [ ! -f "$file" ]; then
+            echo "set_prefs.sh: $file doesn't exist" >&2
+            return 1
+        fi
         printf '%s\n' "$value" > "$file" || return
     done
 }

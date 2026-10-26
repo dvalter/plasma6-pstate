@@ -99,6 +99,16 @@ check "missing intel_pstate is left out" cpu_min_perf '<missing>'
 check "missing turbo is left out"      cpu_turbo '<missing>'
 mv "$WORK/intel_pstate" "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate"
 
+# Like a missing GPU, whose directory is then /
+rm "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
+if "$SCRIPT" -cpu-max-perf 50 2> /dev/null || [ -e "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct" ]; then
+    echo "FAIL - writing a missing setting"
+    failures=$((failures + 1))
+else
+    echo "ok   - writing a missing setting fails and creates nothing"
+fi
+printf '100\n' > "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
+
 chmod a-w "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"
 if "$SCRIPT" -cpu-max-perf 50 2> /dev/null; then
     echo "FAIL - failed write exits with 0"
