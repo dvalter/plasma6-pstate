@@ -45,6 +45,19 @@ put "$l/fan_mode" 0
 put "$l/battery_care_limit" 100
 put "$l/usb_charge" 1
 
+r=$SYS/class/powercap/intel-rapl
+mkdir -p "$r/intel-rapl:0" "$r/intel-rapl:1"
+put "$r/intel-rapl:1/name" psys
+r=$r/intel-rapl:0
+put "$r/name" package-0
+put "$r/enabled" 0
+put "$r/constraint_0_name" long_term
+put "$r/constraint_0_power_limit_uw" 28000000
+put "$r/constraint_0_max_power_uw" 45000000
+put "$r/constraint_1_name" short_term
+put "$r/constraint_1_power_limit_uw" 64000000
+put "$r/constraint_1_max_power_uw" 0
+
 for i in 0 1; do
     mkdir -p "$SYS/class/thermal/cooling_device$i"
 done

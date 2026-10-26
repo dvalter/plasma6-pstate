@@ -23,6 +23,49 @@ INTEL_PSTATE=$CPU/intel_pstate
 GPU=$(drm_card 0x8086)
 NVIDIA_GPU=$(drm_card 0x10de)
 
+# Intel's Running Average Power Limit of the CPU package
+INTEL_RAPL=$(grep -H "package-0" "$SYSFS"/class/powercap/intel-rapl/*/name 2> /dev/null | \
+             head -n1 | sed 's/\/name:.*//')
+
+# rapl_constraint <long_term|short_term>: prints the start of the constraint's
+# file names
+rapl_constraint() {
+    if [ -n "$INTEL_RAPL" ]; then
+        grep -H "$1" "$INTEL_RAPL"/constraint_*_name 2> /dev/null | \
+            head -n1 | sed 's/_name:.*//'
+    fi
+}
+
+RAPL_LONG=$(rapl_constraint long_term)
+RAPL_SHORT=$(rapl_constraint short_term)
+
+# read_watts <file>: prints the microwatts in file as watts
+read_watts() {
+    if [ -f "$1" ]; then
+        echo $(( $(cat "$1") / 1000000 ))
+    fi
+}
+
+# rapl_max <constraint> <default>: the most watts a limit may be set to,
+# which the hardware may not tell
+rapl_max() {
+    local max
+    max=$(read_watts "$1_max_power_uw")
+    if [ -n "$1" ] && [ "${max:-0}" -gt 0 ]; then
+        echo "$max"
+    elif [ -n "$1" ]; then
+        echo "$2"
+    fi
+}
+
+RAPL_LONG_MAX=$(rapl_max "$RAPL_LONG" 100)
+RAPL_SHORT_MAX=$(rapl_max "$RAPL_SHORT" 200)
+
+# set_rapl <watts> <constraint>
+set_rapl() {
+    write $(( $1 * 1000000 )) "$2_power_limit_uw" && write 1 "$INTEL_RAPL/enabled"
+}
+
 # Turbo is switched with the generic cpufreq boost, intel_pstate's no_turbo or
 # AMD's cpb
 if [ -f "$CPU/cpufreq/boost" ]; then
@@ -171,6 +214,11 @@ read_all() {
         field thermal_mode "$(read_thermal_mode)"
     fi
 
+    field intel_rapl_long "$(read_watts "${RAPL_LONG}_power_limit_uw")"
+    field intel_rapl_long_max "$RAPL_LONG_MAX"
+    field intel_rapl_short "$(read_watts "${RAPL_SHORT}_power_limit_uw")"
+    field intel_rapl_short_max "$RAPL_SHORT_MAX"
+
     field intel_tcc_cur_state "$(cat "$INTEL_TCC/cur_state" 2> /dev/null)"
     field intel_tcc_max_state "$(cat "$INTEL_TCC/max_state" 2> /dev/null)"
 
@@ -206,7 +254,9 @@ usage() {
     echo "                  -lg-fan-mode |"
     echo "                  -lg-usb-charge |"
     echo "                  -powermizer |"
-    echo "                  -intel-tcc-cur-state ] value"
+    echo "                  -intel-tcc-cur-state |"
+    echo "                  -intel-rapl-long |"
+    echo "                  -intel-rapl-short ] value"
     echo "2: set_prefs.sh -read-all"
     echo "3: set_prefs.sh -read-powermizer"
     exit 3
@@ -221,6 +271,7 @@ ENERGY_PERF='default|performance|balance_performance|balance_power|power'
 THERMAL_MODE='performance|balanced|cool-bottom|quiet'
 POWERMIZER='[0-2]'
 TCC='[0-9]{1,3}'
+WATTS='[1-9][0-9]{0,3}'
 
 # accept <regex>: exits unless the value matches regex
 accept() {
@@ -230,9 +281,9 @@ accept() {
     fi
 }
 
-# accept_at_most <file>: exits unless the value is at most the number in file
+# accept_at_most <number>: exits unless the value is at most number
 accept_at_most() {
-    if [ -f "$1" ] && [ "$value" -gt "$(cat "$1")" ]; then
+    if [ -n "$1" ] && [ "$value" -gt "$1" ]; then
         echo "set_prefs.sh: $value is too large for $option" >&2
         exit 2
     fi
@@ -264,7 +315,9 @@ case $option in
     -lg-fan-mode)             accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/fan_mode" 0 1 ;;
     -lg-usb-charge)           accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/usb_charge" 1 0 ;;
     -powermizer)              accept "$POWERMIZER";   nvidia-settings -a "[gpu:0]/GpuPowerMizerMode=$value" 2> /dev/null ;;
-    -intel-tcc-cur-state)     accept "$TCC";          accept_at_most "$INTEL_TCC/max_state"; write "$value" "$INTEL_TCC/cur_state" ;;
+    -intel-tcc-cur-state)     accept "$TCC";          accept_at_most "$(cat "$INTEL_TCC/max_state" 2> /dev/null)"; write "$value" "$INTEL_TCC/cur_state" ;;
+    -intel-rapl-long)         accept "$WATTS";        accept_at_most "$RAPL_LONG_MAX"; set_rapl "$value" "$RAPL_LONG" ;;
+    -intel-rapl-short)        accept "$WATTS";        accept_at_most "$RAPL_SHORT_MAX"; set_rapl "$value" "$RAPL_SHORT" ;;
     -read-all)                read_all ;;
     -read-powermizer)         read_powermizer ;;
     *)                        usage ;;

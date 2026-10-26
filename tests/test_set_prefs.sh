@@ -56,6 +56,10 @@ check_powermizer() {
     fi
 }
 check_powermizer "read powermizer" '{"powermizer":"2"}'
+check "initial rapl long term"     intel_rapl_long 28
+check "rapl long term limit"       intel_rapl_long_max 45
+check "initial rapl short term"    intel_rapl_short 64
+check "default rapl short limit"   intel_rapl_short_max 200
 check "initial tcc offset"         intel_tcc_cur_state 0
 check "tcc offset limit"           intel_tcc_max_state 63
 check "nvidia runtime status"      nvidia_runtime_status suspended
@@ -73,6 +77,11 @@ check "nvidia runtime status"      nvidia_runtime_status suspended
 "$SCRIPT" -lg-battery-charge-limit true; check "set lg battery limit"  lg_battery_charge_limit true
 "$SCRIPT" -lg-usb-charge false;          check "set lg usb charge"     lg_usb_charge false
 "$SCRIPT" -lg-fan-mode false;            check "set lg fan mode"       lg_fan_mode false
+"$SCRIPT" -intel-rapl-long 15;          check "set rapl long term"    intel_rapl_long 15
+"$SCRIPT" -intel-rapl-short 30;         check "set rapl short term"   intel_rapl_short 30
+rapl=$PLASMA_PSTATE_SYSFS/class/powercap/intel-rapl/intel-rapl:0
+[ "$(cat "$rapl/constraint_0_power_limit_uw")" == 15000000 ] && [ "$(cat "$rapl/enabled")" == 1 ] || \
+    { echo "FAIL - rapl not written in microwatts and enabled"; failures=$((failures + 1)); }
 "$SCRIPT" -intel-tcc-cur-state 10;      check "set tcc offset"        intel_tcc_cur_state 10
 "$SCRIPT" -powermizer 1;                 check_powermizer "set nvidia powermizer" '{"powermizer":"1"}'
 
@@ -113,6 +122,9 @@ reject -thermal-mode "--help"
 reject -lg-fan-mode 1
 reject -powermizer 3
 reject -intel-tcc-cur-state 64
+reject -intel-rapl-long 46
+reject -intel-rapl-long 0
+reject -intel-rapl-short 201
 reject -intel-tcc-cur-state -1
 reject -powermizer "1 --assign=Foo=1"
 
@@ -135,6 +147,18 @@ mv "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate" "$WORK/intel_pstate"
 check "missing intel_pstate is left out" cpu_min_perf '<missing>'
 check "missing turbo is left out"      cpu_turbo '<missing>'
 mv "$WORK/intel_pstate" "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate"
+
+rm -r "$PLASMA_PSTATE_SYSFS/class/powercap" "$PLASMA_PSTATE_SYSFS/class/thermal"
+check "missing RAPL is left out"       intel_rapl_long '<missing>'
+check "missing TCC is left out"        intel_tcc_cur_state '<missing>'
+for option in -intel-rapl-long -intel-rapl-short -intel-tcc-cur-state; do
+    if (cd "$WORK" && "$SCRIPT" $option 10 2> /dev/null) || ls "$WORK" | grep -q power_limit; then
+        echo "FAIL - $option without the hardware"
+        failures=$((failures + 1))
+    else
+        echo "ok   - $option fails without the hardware"
+    fi
+done
 
 # Like a missing GPU, whose directory is then /
 rm "$PLASMA_PSTATE_SYSFS/devices/system/cpu/intel_pstate/max_perf_pct"

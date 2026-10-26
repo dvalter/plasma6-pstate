@@ -64,6 +64,8 @@ var sensors = {
     'gpu_max_freq': {'unit': ' MHz'},
     'gpu_boost_freq': {'unit': ' MHz'},
     'nvidia_runtime_status': {'format': to_string},
+    'intel_rapl_long': {'unit': ' W'},
+    'intel_rapl_short': {'unit': ' W'},
     'intel_tcc_cur_state': {'unit': ' °C', 'format': to_tcc_offset},
 }
 
@@ -114,6 +116,12 @@ var model =  [
                 {'symbol': 'k', 'text': 'Balance Performance', 'sensor_value': 'balance_performance'},
                 {'symbol': 'l', 'text': 'Balance Power', 'sensor_value': 'balance_power'},
                 {'symbol': 'f', 'text': 'Power', 'sensor_value': 'power'}
+            ]},
+            {'type': 'group', 'text': 'Running Average Power Limit (RAPL)', 'items' :[
+                {'type': 'slider', 'text': 'Short Term', 'min': 1, 'max': 'intel_rapl_short_max',
+                 'sensor': 'intel_rapl_short'},
+                {'type': 'slider', 'text': 'Long Term', 'min': 1, 'max': 'intel_rapl_long_max',
+                 'sensor': 'intel_rapl_long'}
             ]}
         ]
     },
