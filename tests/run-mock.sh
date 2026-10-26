@@ -1,12 +1,13 @@
 #!/bin/bash
 # Run the widget in plasmoidviewer (from plasma-sdk) against the mock sysfs
 # tree and mock vendor tools. Extra arguments go to plasmoidviewer.
+# MOCK_CPU=amd emulates a CPU without intel_pstate.
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-"$HERE/mock/setup.sh" "$WORK"
+"$HERE/mock/setup.sh" "$WORK" "${MOCK_CPU:-intel}"
 export PLASMA_PSTATE_SYSFS=$WORK/sys
 export PATH=$HERE/mock/bin:$PATH
 

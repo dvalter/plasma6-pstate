@@ -21,6 +21,22 @@ drm_card() {
 CPU=$SYSFS/devices/system/cpu
 INTEL_PSTATE=$CPU/intel_pstate
 GPU=$(drm_card 0x8086)
+
+# Turbo is switched with the generic cpufreq boost, intel_pstate's no_turbo or
+# AMD's cpb
+if [ -f "$CPU/cpufreq/boost" ]; then
+    TURBO=$CPU/cpufreq/boost
+    TURBO_ON=1
+    TURBO_OFF=0
+elif [ -f "$INTEL_PSTATE/no_turbo" ]; then
+    TURBO=$INTEL_PSTATE/no_turbo
+    TURBO_ON=0
+    TURBO_OFF=1
+elif [ -f "$CPU/cpufreq/policy0/cpb" ]; then
+    TURBO=$CPU/cpufreq/policy0/cpb
+    TURBO_ON=1
+    TURBO_OFF=0
+fi
 LG_LAPTOP=$SYSFS/devices/platform/lg-laptop
 
 # write <value> <file>...: only writes to existing files
@@ -126,8 +142,8 @@ read_all() {
 
     field cpu_min_perf "$(cat "$INTEL_PSTATE/min_perf_pct" 2> /dev/null)"
     field cpu_max_perf "$(cat "$INTEL_PSTATE/max_perf_pct" 2> /dev/null)"
-    if [ -f "$INTEL_PSTATE/no_turbo" ]; then
-        field cpu_turbo "$(read_bool "$INTEL_PSTATE/no_turbo" 1)"
+    if [ -n "$TURBO" ]; then
+        field cpu_turbo "$(read_bool "$TURBO" "$TURBO_OFF")"
     fi
     field gpu_min_freq "$(cat "$GPU/gt_min_freq_mhz" 2> /dev/null)"
     field gpu_max_freq "$(cat "$GPU/gt_max_freq_mhz" 2> /dev/null)"
@@ -202,7 +218,7 @@ value=$2
 case $option in
     -cpu-min-perf)            accept "$PERCENT";      write_nonzero "$value" "$INTEL_PSTATE/min_perf_pct" ;;
     -cpu-max-perf)            accept "$PERCENT";      write_nonzero "$value" "$INTEL_PSTATE/max_perf_pct" ;;
-    -cpu-turbo)               accept "$BOOL";         write_bool "$value" "$INTEL_PSTATE/no_turbo" 0 1 ;;
+    -cpu-turbo)               accept "$BOOL";         write_bool "$value" "$TURBO" "$TURBO_ON" "$TURBO_OFF" ;;
     -gpu-min-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_min_freq_mhz" ;;
     -gpu-max-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_max_freq_mhz" ;;
     -gpu-boost-freq)          accept "$MHZ";          write_nonzero "$value" "$GPU/gt_boost_freq_mhz" ;;

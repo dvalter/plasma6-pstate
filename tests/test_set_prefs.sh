@@ -127,6 +127,28 @@ else
     echo "ok   - failed write exits with an error"
 fi
 
+# A CPU without intel_pstate, with turbo through the generic cpufreq boost,
+# and then AMD's cpb
+"$HERE/mock/setup.sh" "$WORK/amd" amd
+export PLASMA_PSTATE_SYSFS=$WORK/amd/sys
+boost=$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpufreq/boost
+check "amd: no intel_pstate"            cpu_min_perf '<missing>'
+check "amd: boost on"                   cpu_turbo true
+"$SCRIPT" -cpu-turbo false
+check "amd: disable boost"              cpu_turbo false
+[ "$(cat "$boost")" == 0 ] || { echo "FAIL - boost not written"; failures=$((failures + 1)); }
+mkdir -p "$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpufreq/policy0"
+mv "$boost" "$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpufreq/policy0/cpb"
+check "amd: cpb off"                    cpu_turbo false
+"$SCRIPT" -cpu-turbo true
+check "amd: enable cpb"                 cpu_turbo true
+rm "$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpufreq/policy0/cpb"
+check "no turbo switch at all"          cpu_turbo '<missing>'
+if "$SCRIPT" -cpu-turbo true 2> /dev/null; then
+    echo "FAIL - setting turbo without a switch"
+    failures=$((failures + 1))
+fi
+
 if [ $failures -ne 0 ]; then
     echo "$failures failure(s)"
     exit 1

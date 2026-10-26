@@ -1,13 +1,16 @@
 #!/bin/bash
 # Create a fake sysfs tree emulating an Intel laptop with an LG, Dell and
-# Nvidia flavour, so the widget can be exercised on any machine.
+# Nvidia flavour, so the widget can be exercised on any machine. With amd,
+# the CPU uses the generic cpufreq boost instead of intel_pstate, and there is
+# no Intel GPU.
 #
-# Usage: setup.sh <dir>
+# Usage: setup.sh <dir> [intel|amd]
 # Then export PLASMA_PSTATE_SYSFS=<dir>/sys and prepend tests/mock/bin to PATH.
 
 set -e
 
-ROOT=${1:?usage: setup.sh <dir>}
+ROOT=${1:?usage: setup.sh <dir> [intel|amd]}
+CPU_VENDOR=${2:-intel}
 SYS=$ROOT/sys
 
 rm -rf "$ROOT"
@@ -43,3 +46,9 @@ put "$l/usb_charge" 1
 
 put "$ROOT/dell_thermal_mode" Balanced
 put "$ROOT/nvidia_powermizer" 2
+
+if [ "$CPU_VENDOR" == amd ]; then
+    rm -r "$SYS/devices/system/cpu/intel_pstate" "$SYS/class/drm/card0"
+    mkdir -p "$SYS/devices/system/cpu/cpufreq"
+    put "$SYS/devices/system/cpu/cpufreq/boost" 1
+fi
