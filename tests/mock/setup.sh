@@ -27,6 +27,8 @@ for i in 0 1 2 3; do
 done
 
 g=$SYS/class/drm/card0
+mkdir -p "$g/device"
+put "$g/device/vendor" 0x8086
 put "$g/gt_RP1_freq_mhz" 300
 put "$g/gt_RP0_freq_mhz" 1100
 put "$g/gt_min_freq_mhz" 300

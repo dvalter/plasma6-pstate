@@ -90,6 +90,16 @@ reject -lg-fan-mode 1
 reject -powermizer 3
 reject -powermizer "1 --assign=Foo=1"
 
+# The Intel GPU is found whichever card it is
+drm=$PLASMA_PSTATE_SYSFS/class/drm
+mv "$drm/card0" "$drm/card1"
+mkdir -p "$drm/card0/device"
+printf '0x10de\n' > "$drm/card0/device/vendor"
+check "Intel GPU found as card1"       gpu_cur_freq 450
+"$SCRIPT" -gpu-max-freq 1000;          check "set gpu max freq on card1" gpu_max_freq 1000
+rm -r "$drm/card0"
+mv "$drm/card1" "$drm/card0"
+
 # Settings of hardware that isn't there are left out
 rm -r "$PLASMA_PSTATE_SYSFS/class/drm/card0" "$PLASMA_PSTATE_SYSFS/devices/platform/lg-laptop"
 check "missing GPU is left out"        gpu_min_freq '<missing>'

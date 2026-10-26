@@ -11,9 +11,16 @@ if [ "$EUID" -ne 0 ] && [ -n "$PLASMA_PSTATE_SYSFS" ]; then
     SYSFS=$PLASMA_PSTATE_SYSFS
 fi
 
+# drm_card <PCI vendor id>: prints the directory of the first DRM card from
+# that vendor
+drm_card() {
+    grep -H "$1" "$SYSFS"/class/drm/card?/device/vendor 2> /dev/null | \
+        head -n1 | sed 's/\/device\/vendor:.*//'
+}
+
 CPU=$SYSFS/devices/system/cpu
 INTEL_PSTATE=$CPU/intel_pstate
-GPU=$SYSFS/class/drm/card0
+GPU=$(drm_card 0x8086)
 LG_LAPTOP=$SYSFS/devices/platform/lg-laptop
 
 # write <value> <file>...: only writes to existing files
