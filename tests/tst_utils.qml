@@ -55,6 +55,16 @@ TestCase {
         compare(Utils.sensors_text(['cpu_cur_freq'], values), '')
     }
 
+    function test_available_items() {
+        var radio = {'type': 'radio', 'sensor': 'cpu_governor', 'available': 'cpu_available_governors',
+                     'items': [{'sensor_value': 'performance'}, {'sensor_value': 'powersave'},
+                               {'sensor_value': 'schedutil'}]}
+        compare(Utils.available_items(radio, {}).length, 3, 'all until the available ones are read')
+        compare(Utils.available_items(radio, {'cpu_available_governors': 'performance powersave'}),
+                [{'sensor_value': 'performance'}, {'sensor_value': 'powersave'}])
+        compare(Utils.available_items({'items': radio.items}, {'cpu_available_governors': 'powersave'}).length, 3)
+    }
+
     function test_has_value() {
         var values = {'cpu_min_perf': '20', 'cpu_governor': 'powersave'}
         verify(Utils.has_value({'type': 'slider', 'sensor': 'cpu_min_perf'}, values))

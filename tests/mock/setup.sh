@@ -26,6 +26,7 @@ for i in 0 1 2 3; do
     d=$SYS/devices/system/cpu/cpu$i/cpufreq
     mkdir -p "$d"
     put "$d/scaling_governor" powersave
+    put "$d/scaling_available_governors" "performance powersave"
     put "$d/energy_performance_preference" balance_performance
 done
 
@@ -56,4 +57,8 @@ if [ "$CPU_VENDOR" == amd ]; then
     rm -r "$SYS/devices/system/cpu/intel_pstate" "$SYS/class/drm/card0"
     mkdir -p "$SYS/devices/system/cpu/cpufreq"
     put "$SYS/devices/system/cpu/cpufreq/boost" 1
+    for d in "$SYS"/devices/system/cpu/cpu?/cpufreq; do
+        put "$d/scaling_governor" schedutil
+        put "$d/scaling_available_governors" "conservative ondemand userspace powersave performance schedutil"
+    done
 fi

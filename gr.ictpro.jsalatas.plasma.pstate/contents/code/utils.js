@@ -88,9 +88,13 @@ var model =  [
                 {'type': 'slider', 'text': 'Max freq', 'min': 'gpu_min_limit', 'max': 'gpu_max_limit', 'sensor': 'gpu_max_freq'},
                 {'type': 'slider', 'text': 'Boost freq', 'min': 'gpu_min_limit', 'max': 'gpu_max_limit', 'sensor': 'gpu_boost_freq'},
             ]},
-            {'type': 'radio', 'text': 'CPU Governor', 'sensor': 'cpu_governor', 'items' :[
+            {'type': 'radio', 'text': 'CPU Governor', 'sensor': 'cpu_governor',
+                'available': 'cpu_available_governors', 'items' :[
                 {'symbol': 'a', 'text': 'Performance', 'sensor_value': 'performance'},
-                {'symbol': 'f', 'text': 'Powersave', 'sensor_value': 'powersave'}
+                {'symbol': 'f', 'text': 'Powersave', 'sensor_value': 'powersave'},
+                {'symbol': 'l', 'text': 'Ondemand', 'sensor_value': 'ondemand'},
+                {'symbol': 'k', 'text': 'Schedutil', 'sensor_value': 'schedutil'},
+                {'symbol': 'f', 'text': 'Conservative', 'sensor_value': 'conservative'}
             ]}
         ]
     },
@@ -153,6 +157,17 @@ function find_sensor_ids(tree, idRole, pattern, parent) {
         res = res.concat(find_sensor_ids(tree, idRole, pattern, index));
     }
     return res;
+}
+
+// The options of a radio or combobox. With 'available', only those listed in
+// that setting, separated by spaces, once it has been read.
+function available_items(item, values) {
+    var available = item.available && values[item.available];
+    if(!available) {
+        return item.items;
+    }
+    available = available.split(/\s+/);
+    return item.items.filter(option => available.includes(option.sensor_value));
 }
 
 // Whether a control, or any control in a group or section, has a value

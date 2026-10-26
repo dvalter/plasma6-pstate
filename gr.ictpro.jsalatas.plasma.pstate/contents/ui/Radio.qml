@@ -22,6 +22,8 @@ import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
+import '../code/utils.js' as Utils
+
 ColumnLayout {
     property var props
 
@@ -39,7 +41,7 @@ ColumnLayout {
         Layout.rightMargin: 15
 
         Repeater {
-            model: props.items
+            model: Utils.available_items(props, backend.values)
 
             PushButton {
                 required property var modelData

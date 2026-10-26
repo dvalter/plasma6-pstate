@@ -104,6 +104,7 @@ reject -cpu-turbo yes
 reject -gpu-max-freq -100
 reject -cpu-governor "performance; reboot"
 reject -cpu-governor "../../../etc/passwd"
+reject -cpu-governor schedutil
 reject -energy-perf balance
 reject -thermal-mode "--help"
 reject -lg-fan-mode 1
@@ -155,6 +156,9 @@ export PLASMA_PSTATE_SYSFS=$WORK/amd/sys
 boost=$PLASMA_PSTATE_SYSFS/devices/system/cpu/cpufreq/boost
 check "amd: no intel_pstate"            cpu_min_perf '<missing>'
 check "amd: boost on"                   cpu_turbo true
+check "amd: available governors"        cpu_available_governors "conservative ondemand userspace powersave performance schedutil"
+"$SCRIPT" -cpu-governor ondemand
+check "amd: set ondemand governor"      cpu_governor ondemand
 "$SCRIPT" -cpu-turbo false
 check "amd: disable boost"              cpu_turbo false
 [ "$(cat "$boost")" == 0 ] || { echo "FAIL - boost not written"; failures=$((failures + 1)); }

@@ -22,6 +22,8 @@ import QtQuick.Layouts
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
+import '../code/utils.js' as Utils
+
 RowLayout {
     Layout.fillWidth: true
 
@@ -42,9 +44,10 @@ RowLayout {
 
     PlasmaComponents.ComboBox {
         Layout.fillWidth: true
-        model: props.items
+        readonly property var items: Utils.available_items(props, backend.values)
+        model: items
         textRole: "text"
-        currentIndex: props.items.findIndex(item => item.sensor_value == backend.values[sensor])
-        onActivated: index => backend.changeSetting(sensor, props.items[index].sensor_value)
+        currentIndex: items.findIndex(item => item.sensor_value == backend.values[sensor])
+        onActivated: index => backend.changeSetting(sensor, items[index].sensor_value)
     }
 }

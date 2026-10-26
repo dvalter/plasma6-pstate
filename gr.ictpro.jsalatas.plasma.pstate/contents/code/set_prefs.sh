@@ -161,6 +161,7 @@ read_all() {
     field gpu_boost_freq "$(cat "$GPU/gt_boost_freq_mhz" 2> /dev/null)"
     field gpu_cur_freq "$(cat "$GPU/gt_cur_freq_mhz" 2> /dev/null)"
     field cpu_governor "$(cat "$CPU/cpu0/cpufreq/scaling_governor" 2> /dev/null)"
+    field cpu_available_governors "$(cat "$CPU/cpu0/cpufreq/scaling_available_governors" 2> /dev/null)"
     field energy_perf "$(read_energy_perf)"
 
     if has_dell_thermal; then
@@ -221,6 +222,15 @@ accept() {
     fi
 }
 
+# accept_listed <file>: exits unless the value is one of the words in file,
+# if it exists
+accept_listed() {
+    if [ -f "$1" ] && ! [[ " $(cat "$1") " == *" $value "* ]]; then
+        echo "set_prefs.sh: $value isn't available for $option" >&2
+        exit 2
+    fi
+}
+
 option=$1
 value=$2
 
@@ -231,7 +241,7 @@ case $option in
     -gpu-min-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_min_freq_mhz" ;;
     -gpu-max-freq)            accept "$MHZ";          write_nonzero "$value" "$GPU/gt_max_freq_mhz" ;;
     -gpu-boost-freq)          accept "$MHZ";          write_nonzero "$value" "$GPU/gt_boost_freq_mhz" ;;
-    -cpu-governor)            accept "$GOVERNOR";     write "$value" "$CPU"/cpu*/cpufreq/scaling_governor ;;
+    -cpu-governor)            accept "$GOVERNOR";     accept_listed "$CPU/cpu0/cpufreq/scaling_available_governors"; write "$value" "$CPU"/cpu*/cpufreq/scaling_governor ;;
     -energy-perf)             accept "$ENERGY_PERF";  set_energy_perf "$value" ;;
     -thermal-mode)            accept "$THERMAL_MODE"; smbios-thermal-ctl --set-thermal-mode="$value" 2> /dev/null ;;
     -lg-battery-charge-limit) accept "$BOOL";         write_bool "$value" "$LG_LAPTOP/battery_care_limit" 80 100 ;;
